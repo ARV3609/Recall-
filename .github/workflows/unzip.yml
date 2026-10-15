@@ -1,0 +1,54 @@
+# Save as: .github/workflows/unzip.yml
+# Upload recall-app.zip to the repo root. When a .zip is pushed, this workflow
+# unzips it into the repo root and commits the files. It does NOT deploy anything.
+name: Unzip app
+
+on:
+  push:
+    paths:
+      - "*.zip"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  unzip:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+
+      - name: Unzip into the repo root
+        run: |
+          ZIP=$(ls -1 *.zip 2>/dev/null | head -n 1 || true)
+          if [ -z "$ZIP" ]; then echo "No .zip file found in the repo root"; exit 1; fi
+          echo "Unzipping $ZIP"
+          rm -rf _unzip && mkdir _unzip
+          unzip -q "$ZIP" -d _unzip
+          # If the zip contained a single folder, use that folder's contents
+          if [ ! -f _unzip/index.html ]; then
+            FOUND=$(find _unzip -maxdepth 3 -name index.html | head -n 1)
+            if [ -z "$FOUND" ]; then echo "index.html not found in zip"; exit 1; fi
+            SRC=$(dirname "$FOUND")
+          else
+            SRC=_unzip
+          fi
+          cp -a "$SRC"/. .
+          rm -rf _unzip
+
+      - name: Stamp build id
+        run: |
+          if [ -f sw.js ]; then sed -i "s/__BUILD__/${GITHUB_SHA::10}/g" sw.js; fi
+
+      - name: Commit the unzipped files
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "Nothing to commit"
+          else
+            git commit -m "Unzip app"
+            git push
+          fi
