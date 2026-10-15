@@ -1,0 +1,63 @@
+# Put this file in your repo at: .github/workflows/deploy.yml
+# Put recall-app.zip in the repo root. Every push to main unzips it and
+# publishes it to GitHub Pages. Each deploy gets a new build id, so installed
+# copies of the app refresh themselves.
+name: Deploy Recall
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+
+      - name: Unzip the app
+        run: |
+          ZIP=$(ls -1 *.zip 2>/dev/null | head -n 1)
+          if [ -z "$ZIP" ]; then echo "No .zip file found in the repo root"; exit 1; fi
+          echo "Unzipping $ZIP"
+          rm -rf site site_tmp && mkdir site
+          unzip -q "$ZIP" -d site
+          # If the zip contained a single folder, move its contents up
+          if [ ! -f site/index.html ]; then
+            FOUND=$(find site -maxdepth 3 -name index.html | head -n 1)
+            if [ -z "$FOUND" ]; then echo "index.html not found in zip"; exit 1; fi
+            mkdir site_tmp
+            cp -a "$(dirname "$FOUND")"/. site_tmp/
+            rm -rf site && mv site_tmp site
+          fi
+          test -f site/index.html
+
+      - name: Stamp build id
+        run: |
+          sed -i "s/__BUILD__/${GITHUB_SHA::10}/g" site/sw.js
+          touch site/.nojekyll
+
+      - name: Set up Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload site
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
