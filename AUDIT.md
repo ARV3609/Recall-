@@ -6,7 +6,8 @@
 > Later pass: Today view now live-refreshes as cards fall due (it used to be a frozen snapshot until you reopened the app), shows a live "next batch in …" countdown, and lays out an explicit plan (n sittings, time estimates, overdue-first ordering).
 > Later still: PYQ sets removed at the owner's request (legacy PYQ cards are dropped on load), and the reminder engine rebuilt — it now re-arms itself daily, catches a missed slot when the app wakes, stays quiet when nothing is due, schedules a closed-app nudge only when cards will actually be due then, and ships an .ics fallback for browsers that cannot wake a closed tab.
 > Later still: the review unit moved from **question** to **lecture**. A lecture is now one scheduled unit (its questions are just its contents), and you rate it once, after the fact, on three factors — **Recall · Understanding · Speed**. There is no answer reveal mid-review: the card you see is the lecture and its size, and the three taps are the whole interaction. The factors map to the FSRS grade (`.6·recall + .25·understanding + .15·speed`, so "didn't understand" can never score above Hard and "blank" is always tonight), the button previews the exact date it will store before you commit, and saves made under the old per-question model are migrated onto their lecture (mean S/D/reps, earliest due) instead of being lost.
-> Still open by choice: #3 (zip is still the deploy input — recommend deleting it), #11 (SW build stamping relies on the zip), #13 (self-host the font), #19 (session caps, post-exam mode, dark mode). Fixed since this list was written: #4 (PYQ removed entirely at the owner's request) and #6 (reminder engine rebuilt).
+> Licensing/cost pass: everything the app uses is permissively licensed and free to run. The Google Fonts CDN was the only third-party request in the app and is now removed — Bricolage Grotesque is self-hosted (60 KB of woff2, SIL OFL 1.1, `fonts/OFL.txt`, precached by the service worker), so the app makes **zero requests off its own origin**, works offline with its real typeface, and hands no visitor IP to Google. Full inventory in `THIRD-PARTY.md`.
+> Still open by choice: #3 (zip is still the deploy input — recommend deleting it), #11 (SW build stamping relies on the zip), #19 (session caps, post-exam mode, dark mode). Fixed since this list was written: #4 (PYQ removed entirely at the owner's request), #6 (reminder engine rebuilt), #13 (font self-hosted).
 >
 > The rest of this document is the original audit, left as written.
 
@@ -211,6 +212,8 @@ e.waitUntil(Promise.all(ASSETS.map(u => c.add(u).catch(()=>{}))).then(()=>self.s
 Line 17 loads Bricolage Grotesque from `fonts.googleapis.com`. `sw.js:6` skips cross-origin requests, so **offline the app silently loses its entire typography** — the one thing that makes it feel designed. It's also a privacy/third-party request on an app that's otherwise 100% local.
 
 **Fix:** self-host the woff2 (2 weights is ~40 KB), or at minimum cache the font files in the SW. Self-hosting also removes 2 DNS/TLS handshakes from cold start.
+
+**Fixed:** both subsets are now in `fonts/` (60 KB total, one variable file per subset, all weights) with the OFL licence beside them, declared as two `@font-face` rules with `unicode-range`, precached by the service worker, and the three `<link>` tags are gone — including the two `preconnect`s. The app now issues no off-origin request at all. See `THIRD-PARTY.md` for the full licence/cost inventory.
 
 ### 14. No export/save format version
 `doImp` accepts any object with 3 keys. There is no `v` field, so the day you change the card schema you can't tell old data from new.
