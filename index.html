@@ -310,16 +310,16 @@ function vToday(){
  if(!DB.chs.length)return h+'<div class="empty"><b>Add your first lecture</b><p>Pick a chapter and say how many questions you wrote.</p><button class="btn" onclick="addSheet()">Add lecture</button><button class="btn alt" onclick="sampleSheet()">Try with sample data</button></div>';
  var q=dueLec(),t=Date.now(),nq=0,nw=0;
  q.forEach(function(l){nq+=items(l);if(l.state==='new')nw++});
+ var mins=0;q.forEach(function(l){mins+=est(items(l))});   // one clock for the hero and the plan
  var nd=nextDue();
  h+='<section class="hero"><svg viewBox="0 0 150 150" aria-hidden="true"><g transform="rotate(-14 75 75)"><rect x="30" y="20" width="84" height="104" rx="22" fill="#FF9A9A"/></g><g transform="rotate(9 75 75)"><rect x="30" y="20" width="84" height="104" rx="22" fill="#FFD771"/></g><rect x="30" y="18" width="84" height="104" rx="22" fill="#fff"/><path d="M92 70a18 18 0 1 1-5-13" fill="none" stroke="#17181C" stroke-width="8" stroke-linecap="round"/></svg><div class="big">'+nq+'</div><p>'+(q.length?'questions to recall across '+q.length+(q.length===1?' lecture':' lectures'):'Nothing due right now. You are all caught up.')+'</p>'+
-  (q.length?'<button class="go" onclick="startAll()">Start review</button><div class="est">'+(q.length-nw)+' review · '+nw+' new · about '+est(nq)+' min</div>':'')+'</section>';
+  (q.length?'<button class="go" onclick="startAll()">Start review</button><div class="est">'+(q.length-nw)+' review · '+nw+' new · about '+mins+' min</div>':'')+'</section>';
  if(!q.length&&nd)h+='<section class="stat nxt"><b id="nxt">Next '+nd.n+(nd.n===1?' lecture':' lectures')+' in '+until(nd.at-t)+'</b><p class="sub" id="nxs">'+readyLabel(nd.at)+'. Close the app if you like — it will be waiting right here.</p></section>';
  DB.chs.filter(function(c){return c.done&&!c.testDone}).sort(function(a,b){return a.testDue-b.testDue}).forEach(function(c){
   var d=Math.ceil((c.testDue-t)/DAY),ls=DB.lecs.filter(function(l){return l.ch===c.id}),n=0;
   ls.forEach(function(l){n+=items(l)});
   h+='<button class="note" onclick="testSheet('+c.id+')"><div><b>Chapter '+c.num+' test</b><span>'+(c.testDue<=t?'Ready now':'In '+d+(d===1?' day':' days'))+' · '+ls.length+(ls.length===1?' lecture':' lectures')+' · '+n+' questions</span></div><em>'+(c.testDue<=t?'Start':'View')+'</em></button>'});
  if(q.length){
-  var mins=0;q.forEach(function(l){mins+=est(items(l))});
   h+='<div class="label">Today\u2019s plan</div>';
   h+='<p class="sub" style="margin:-6px 0 14px">'+q.length+(q.length===1?' sitting':' sittings')+' · '+mins+' min total · most overdue first</p>';
   q.forEach(function(l,i){
