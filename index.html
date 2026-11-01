@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
 <title>Recall</title>
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#EAF1FF">
@@ -16,15 +16,15 @@
    No CDN, no third-party request, works offline, nothing to expire. */
 @font-face{font-family:"Bricolage Grotesque";font-style:normal;font-weight:200 800;font-display:swap;src:url(fonts/bricolage-grotesque-latin-ext.woff2) format("woff2");unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
 @font-face{font-family:"Bricolage Grotesque";font-style:normal;font-weight:200 800;font-display:swap;src:url(fonts/bricolage-grotesque-latin.woff2) format("woff2");unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
-:root{--bg:#EAF1FF;--card:#FFFFFF;--soft:#F1F3F8;--ink:#17181C;--mute:#5A6070;--blue:#8FA6FF;--coral:#FF9A9A;--sun:#FFD771;--mint:#86DDAE;--lilac:#CDB4FF;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+:root{--bg:#EAF1FF;--card:#FFFFFF;--soft:#F1F3F8;--ink:#17181C;--mute:#5A6070;--blue:#8FA6FF;--coral:#FF9A9A;--sun:#FFD771;--mint:#86DDAE;--lilac:#CDB4FF;color-scheme:light;box-sizing:border-box}
 *{box-sizing:border-box;margin:0}
-html,body{height:100%}
+html,body{height:100%;overflow:hidden;overscroll-behavior:none}
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
-body{background:var(--bg);color:var(--ink);font-family:"Bricolage Grotesque",system-ui,-apple-system,"Segoe UI",sans-serif;display:flex;justify-content:center;min-height:100dvh}
+body{background:var(--bg);color:var(--ink);font-family:"Bricolage Grotesque",system-ui,-apple-system,"Segoe UI",sans-serif;display:flex;justify-content:center}
 button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
 button:focus-visible,.in:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
-.app{width:100%;max-width:430px;height:100%;height:100dvh;position:relative;overflow:hidden}
-.view{display:none;height:100%;overflow-y:auto;padding:36px 24px 120px}
+.app{width:100%;max-width:430px;position:fixed;top:0;left:0;right:0;height:100%;height:100dvh;margin:0 auto;overflow:hidden}
+.view{display:none;height:100%;overflow-y:auto;overscroll-behavior:contain;padding:calc(36px + env(safe-area-inset-top,0px)) 24px calc(120px + env(safe-area-inset-bottom,0px))}
 .view.on{display:block}
 h1{font-size:38px;line-height:1.02;font-weight:800;letter-spacing:-.03em}
 .sub{color:var(--mute);font-size:15px;margin-top:10px}
@@ -61,7 +61,7 @@ nav button{color:#A9AEC2;flex:1 1 0;min-width:0;max-width:56px;height:48px;borde
 nav button.on{background:#fff;color:var(--ink)}
 nav button.plus{background:var(--coral);color:var(--ink)}
 nav svg,.ic{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
-.ov{position:absolute;inset:0;background:var(--bg);z-index:5;display:none;flex-direction:column;padding:28px 24px calc(28px + env(safe-area-inset-bottom,0px))}
+.ov{position:absolute;inset:0;background:var(--bg);z-index:5;display:none;flex-direction:column;padding:calc(28px + env(safe-area-inset-top,0px)) 24px calc(28px + env(safe-area-inset-bottom,0px))}
 .ov.on{display:flex}
 .prog{display:flex;align-items:center;gap:16px}
 .x{width:46px;height:46px;border-radius:50%;background:var(--card);display:grid;place-items:center;flex:none}
@@ -92,7 +92,7 @@ nav svg,.ic{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2.
 .empty b{font-size:22px;display:block}.empty p{color:var(--mute);margin-top:10px;font-size:15px}
 .sheet{position:absolute;inset:0;background:rgba(23,24,28,.35);z-index:8;display:none;align-items:flex-end}
 .sheet.on{display:flex}
-.pan{background:var(--bg);border-radius:36px 36px 0 0;padding:30px 24px calc(28px + env(safe-area-inset-bottom,0px));width:100%;max-height:90%;overflow-y:auto}
+.pan{background:var(--bg);border-radius:36px 36px 0 0;padding:30px 24px calc(28px + env(safe-area-inset-bottom,0px));width:100%;max-height:90%;overflow-y:auto;overscroll-behavior:contain}
 .pan h2{font-size:28px;font-weight:800;letter-spacing:-.02em}
 .in{width:100%;padding:16px 18px;border-radius:20px;border:0;background:var(--card);font:inherit;font-size:16px;color:var(--ink);margin-top:12px}
 textarea.in{min-height:96px;resize:vertical}
@@ -687,7 +687,13 @@ function wipe(){try{localStorage.removeItem(KEY)}catch(e){}location.reload()}
 function boot(){try{load();fix();render()}catch(e){
  DB=DEF();
  try{$('v-today').innerHTML='<div class="head"><h1>Recall</h1></div><div class="empty"><b>Your saved data could not be read</b><p>That can happen after an interrupted save or a bad import. Reset to start clean, or try reloading first.</p><button class="btn" onclick="location.reload()">Reload</button><button class="btn bad" onclick="wipe()">Reset data</button></div>';$('v-today').classList.add('on');$('nav').innerHTML=''}catch(x){} }}
-boot();setInterval(function(){if(DB.pt.run&&pLeft()<=0)pEnd(true);else pDraw();tickNext();if(++tickN%5===0)refreshDue()},1000);setInterval(tick,30000);document.addEventListener('visibilitychange',function(){tick();if(!document.hidden)refreshDue(true);tickNext()});tick();sw();schedDaily();setInterval(tryReload,5000);
+/* the shell is a fixed pane; if any browser still nudges the document (toolbar
+   transitions, an old WebView, a keyboard), put it back so the nav cannot slide off */
+function pinViewport(){try{if(window.scrollY||window.pageYOffset||document.documentElement.scrollTop||document.body.scrollTop)window.scrollTo(0,0)}catch(e){}}
+window.addEventListener('resize',pinViewport);
+window.addEventListener('orientationchange',pinViewport);
+if(window.visualViewport)window.visualViewport.addEventListener('resize',pinViewport);
+boot();pinViewport();setInterval(function(){if(DB.pt.run&&pLeft()<=0)pEnd(true);else pDraw();tickNext();if(++tickN%5===0)refreshDue()},1000);setInterval(tick,30000);document.addEventListener('visibilitychange',function(){tick();if(!document.hidden)refreshDue(true);tickNext()});tick();sw();schedDaily();setInterval(tryReload,5000);
 </script>
 </body>
 </html>

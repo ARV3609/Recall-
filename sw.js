@@ -1,4 +1,4 @@
-const V='b2ba653b0b',C='recall-'+V,ASSETS=['./','index.html','manifest.webmanifest','fonts/bricolage-grotesque-latin.woff2','fonts/bricolage-grotesque-latin-ext.woff2','icons/icon-192.png','icons/icon-512.png','icons/icon-512-maskable.png','icons/apple-touch-icon.png','icons/icon.svg'];
+const V='e73c7fba9c',C='recall-'+V,ASSETS=['./','index.html','manifest.webmanifest','fonts/bricolage-grotesque-latin.woff2','fonts/bricolage-grotesque-latin-ext.woff2','icons/icon-192.png','icons/icon-512.png','icons/icon-512-maskable.png','icons/apple-touch-icon.png','icons/icon.svg'];
 const ICON=new URL('icons/icon-192.png',self.registration.scope).href;
 self.addEventListener('install',e=>{e.waitUntil(caches.open(C).then(c=>Promise.all(ASSETS.map(u=>c.add(new Request(u,{cache:'reload'})).catch(()=>0)))).then(()=>self.skipWaiting()))});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(n=>n!==C&&n!=='recall-state').map(n=>caches.delete(n)))).then(()=>self.clients.claim()))});

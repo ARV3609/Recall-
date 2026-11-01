@@ -257,7 +257,7 @@ Six 48px buttons + 16px padding = 304px needed; the available inner width is `10
 ### 19. Smaller things
 - `dueQ()` has **no session cap or daily new-card limit** — after a break you can get a 2,000-card session (verified). Add `sess` limits (e.g. 20 new + all reviews) and a "Study ahead" option.
 - The exam clamp (`index.html:155`) only applies while `left > 0`; **on exam day intervals jump back to months** (measured 262 days for a high-stability card). Add an explicit post-exam mode.
-- `height:100%` on `html/body/.app` → use `100dvh` so the mobile URL bar collapsing doesn't clip the nav.
+- ~~`height:100%` on `html/body/.app` → use `100dvh` so the mobile URL bar collapsing doesn't clip the nav.~~ **This advice was wrong and caused a bug:** `dvh` re-measures on every toolbar transition *and* `:root` carried safe-area padding while `body` kept a `100dvh` floor, so the document stayed scrollable and the shell drifted — the nav slid down and off-screen. The shell is now a `position:fixed` pane pinned at `top:0` with `100dvh` height, `html/body` are `overflow:hidden`, the insets moved onto `.view`/`.ov`, and the keyboard resizes the layout (`interactive-widget=resizes-content`) instead of scrolling it.
 - `row()` in Progress emits `<button onclick="">`s — dead focus targets. Render a `div` when there's no action.
 - No dark mode; `color-scheme:light` is hardcoded. `prefers-color-scheme` + `theme-color` variants would be ~15 lines.
 - Manifest is minimal: no `lang`, `dir`, `categories`, `screenshots`, `shortcuts`, or `display_override`. `screenshots` are what make the Android install dialog look real.
