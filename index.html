@@ -488,7 +488,17 @@ function sw(){if(!('serviceWorker' in navigator)||location.protocol==='file:')re
 function setRet(v){DB.set.ret=v;save();render()}
 /* ---------- sheets ---------- */
 function sh(h){$('pan').innerHTML=h;$('sh').classList.add('on')}
-function closeSh(){$('sh').classList.remove('on');refreshDue(true)}
+function closeSh(){ASK=null;$('sh').classList.remove('on');refreshDue(true)}
+/* Every destructive action goes through askFirst(): nothing is deleted on a single tap.
+   Cancel puts you back where you were, and the undo toast stays for the rest. */
+var ASK=null;
+function askFirst(title,body,ok,fn,back){
+ ASK={fn:fn,back:back||null};
+ sh('<h2>'+esc(title)+'</h2>'+(body?'<p class="sub">'+body+'</p>':'')+
+    '<button class="btn bad" onclick="askYes()">'+esc(ok)+'</button>'+
+    '<button class="btn alt" onclick="askNo()">Cancel</button>')}
+function askYes(){var a=ASK;ASK=null;if(a&&a.fn)a.fn();else closeSh()}
+function askNo(){var a=ASK;ASK=null;if(a&&a.back)a.back();else closeSh()}
 function addSheet(id){
  var o=DB.chs.slice().sort(function(a,b){return a.num-b.num}).map(function(c){return '<option value="'+c.id+'"'+(c.id===id?' selected':'')+'>Ch'+c.num+(c.name?' '+esc(c.name):'')+'</option>'}).join('')+'<option value="new">+ New chapter</option>';
  sh('<h2>Add lecture</h2><div class="lbl">Chapter</div><select class="in" id="a-ch" onchange="aTog()">'+o+'</select><div id="a-new"><input class="in" id="a-num" type="number" min="1" inputmode="numeric" placeholder="Chapter number"><input class="in" id="a-name" placeholder="Chapter name (optional)"></div><div class="lbl">How many questions?</div><input class="in" id="a-n" type="number" min="1" max="60" inputmode="numeric" placeholder="8"><div class="lbl">Question text (optional, one per line)</div><textarea class="in" id="a-t" placeholder="Leave empty and fill them in later"></textarea><label class="chk"><input type="checkbox" id="a-ps"> This lecture has a practice sheet</label><button class="btn" onclick="doAdd()">Add lecture</button>');
@@ -531,9 +541,15 @@ function doEditCh(id){var c=ch(id);if(!c)return;
  var num=parseInt($('e-num').value,10);if(!(num>=1)){toast('Enter a chapter number');return}
  if(DB.chs.some(function(x){return x.id!==id&&x.num===num})){toast('Chapter '+num+' already exists');return}
  c.num=num;c.name=$('e-name').value.trim();relabel();save();chSheet(id);render();toast('Chapter saved')}
-function delCh(id){var c=ch(id);if(!c)return;keep();
- DB.chs=DB.chs.filter(function(x){return x.id!==id});DB.lecs=DB.lecs.filter(function(l){return l.ch!==id});DB.cards=DB.cards.filter(function(x){return x.ch!==id});
- sessClean();save();closeSh();render();toast('Ch'+c.num+' deleted',true)}
+function delCh(id){var c=ch(id);if(!c)return;
+ var nl=DB.lecs.filter(function(l){return l.ch===id}).length,nq=DB.cards.filter(function(q){return q.ch===id}).length;
+ askFirst('Delete Ch'+c.num+(c.name?' '+c.name:'')+'?',
+  nl+(nl===1?' lecture':' lectures')+' and '+nq+(nq===1?' question':' questions')+' go with it. You can undo straight after.',
+  'Delete chapter',function(){
+   keep();
+   DB.chs=DB.chs.filter(function(x){return x.id!==id});DB.lecs=DB.lecs.filter(function(l){return l.ch!==id});DB.cards=DB.cards.filter(function(x){return x.ch!==id});
+   sessClean();save();closeSh();render();toast('Ch'+c.num+' deleted',true)},
+  function(){chSheet(id)})}
 /* ---------- lecture sheet ---------- */
 function lecSheet(id){var l=lec(id);if(!l)return;
  var qs=qsOf(id),t=Date.now();
@@ -548,19 +564,34 @@ function lecSheet(id){var l=lec(id);if(!l)return;
  h+='<button class="btn bad" onclick="delLec('+id+')">Delete lecture</button>';
  sh(h)}
 function addQ(id){var l=lec(id);if(!l)return;mk(l.ch,id,'');relabel();save();lecSheet(id);render();toast('Question added')}
-function delCard(id){var q=DB.cards.filter(function(x){return x.id===id})[0];if(!q)return;var lid=q.lec;keep();
- DB.cards=DB.cards.filter(function(x){return x.id!==id});relabel();save();
- if(lid&&lec(lid))lecSheet(lid);else closeSh();render();toast('Question deleted',true)}
+function delCard(id){var q=DB.cards.filter(function(x){return x.id===id})[0];if(!q)return;var lid=q.lec;
+ var left=DB.cards.filter(function(x){return x.lec===lid}).length-1;
+ var back=(lid&&lec(lid))?function(){lecSheet(lid)}:function(){closeSh()};
+ askFirst('Delete this question?',
+  (q.text?esc(q.text.slice(0,80))+' \u2014 ':'')+'The lecture keeps its other '+left+(left===1?' question':' questions')+'. You can undo straight after.',
+  'Delete question',function(){
+   keep();
+   DB.cards=DB.cards.filter(function(x){return x.id!==id});relabel();save();
+   if(lid&&lec(lid))lecSheet(lid);else closeSh();render();toast('Question deleted',true)},
+  back)}
 function addPS(id){var l=lec(id);if(!l)return;l.ps=true;save();lecSheet(id);render();toast('Practice sheet added')}
-function delPS(id){var l=lec(id);if(!l)return;keep();l.ps=false;save();lecSheet(id);render();toast('Practice sheet removed',true)}
+function delPS(id){var l=lec(id);if(!l)return;
+ askFirst('Remove the practice sheet?','It stops counting toward this lecture\u2019s size. No questions are touched, and you can add it back any time.',
+  'Remove it',function(){keep();l.ps=false;save();lecSheet(id);render();toast('Practice sheet removed',true)},
+  function(){lecSheet(id)})}
 function setTx(id,v){DB.cards.forEach(function(c){if(c.id===id)c.text=String(v).trim()});save()}
 function setLecNum(id){var l=lec(id);if(!l)return;var n=parseInt($('l-num').value,10);
  if(!(n>=1)){toast('Enter a lecture number');return}
  if(DB.lecs.some(function(x){return x.ch===l.ch&&x.id!==id&&x.num===n})){toast('Lecture '+n+' already exists');return}
  l.num=n;relabel();save();lecSheet(id);render();toast('Lecture saved')}
-function delLec(id){var l=lec(id);if(!l)return;var cn=l.num,cid=l.ch;keep();
- DB.lecs=DB.lecs.filter(function(x){return x.id!==id});DB.cards=DB.cards.filter(function(x){return x.lec!==id});
- sessClean();save();if(ch(cid))chSheet(cid);else closeSh();render();toast('Lecture '+cn+' deleted',true)}
+function delLec(id){var l=lec(id);if(!l)return;var cn=l.num,cid=l.ch,n=qsOf(id).length;
+ askFirst('Delete '+lname(l)+'?',
+  n+(n===1?' question':' questions')+' go with it. You can undo straight after.',
+  'Delete lecture',function(){
+   keep();
+   DB.lecs=DB.lecs.filter(function(x){return x.id!==id});DB.cards=DB.cards.filter(function(x){return x.lec!==id});
+   sessClean();save();if(ch(cid))chSheet(cid);else closeSh();render();toast('Lecture '+cn+' deleted',true)},
+  function(){lecSheet(id)})}
 function compSheet(id){sh('<h2>Complete chapter</h2><p class="sub">Recall will schedule a full-chapter review 3 days from now: every lecture in this chapter, rated one after another. That is the last spaced pass before the chapter retires.</p><button class="btn" onclick="doComp('+id+')">Complete chapter</button>')}
 function doComp(id){var c=ch(id);if(!c)return;var t=Date.now();
  c.done=true;c.doneAt=t;c.testDue=dayStart(t+3*DAY);
@@ -571,11 +602,16 @@ function cp(){var e=$('ex');if(!e)return;e.select();
  function manual(){try{document.execCommand('copy');okc()}catch(x){toast('Text selected — press Ctrl/Cmd+C')}}
  try{if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(e.value).then(okc,manual);return}}catch(x){}
  manual()}
-function impSheet(){sh('<h2>Import</h2><p class="sub">Paste exported text. This replaces your current data.</p><textarea class="in" id="im" style="min-height:180px"></textarea><button class="btn" onclick="doImp()">Import</button>')}
-function doImp(){try{var d=JSON.parse($('im').value);
- if(!d||typeof d!=='object'||(!d.chs&&!d.cards))throw 0;
- DB=normalize(d);fix();save();LAST=null;closeSh();render();toast('Imported')}
- catch(e){toast('That text is not a valid export')}}
+function impSheet(raw){sh('<h2>Import</h2><p class="sub">Paste exported text. This replaces your current data.</p><textarea class="in" id="im" style="min-height:180px">'+(raw?esc(raw):'')+'</textarea><button class="btn" onclick="doImp()">Import</button>')}
+function doImp(){var raw=$('im')?$('im').value:'',d;
+ try{d=JSON.parse(raw);if(!d||typeof d!=='object'||(!d.chs&&!d.cards))throw 0}
+ catch(e){toast('That text is not a valid export');return}
+ var nc=Array.isArray(d.chs)?d.chs.length:0,nq=Array.isArray(d.cards)?d.cards.length:0;
+ askFirst('Replace everything on this device?',
+  'You have '+DB.chs.length+(DB.chs.length===1?' chapter':' chapters')+' and '+DB.cards.length+(DB.cards.length===1?' question':' questions')+' now. The import has '+nc+' and '+nq+'. It replaces yours. You can undo straight after.',
+  'Replace my data',function(){
+   keep();DB=normalize(d);fix();save();closeSh();render();toast('Imported',true)},
+  function(){impSheet(raw)})}
 function reset(){keep();DB=DEF();save();closeSh();render();toast('Everything erased',true)}
 function sampleSheet(){sh('<h2>Load sample data?</h2><p class="sub">This replaces what you have now. You can undo straight after.</p><button class="btn" onclick="sample()">Load sample</button><button class="btn alt" onclick="closeSh()">Cancel</button>')}
 function eraseSheet(){sh('<h2>Erase everything?</h2><p class="sub">Every chapter, lecture, question and stat on this device will be deleted. You can undo straight after.</p><button class="btn bad" onclick="reset()">Erase everything</button><button class="btn alt" onclick="closeSh()">Cancel</button>')}
