@@ -149,11 +149,11 @@ function normalize(d){
  d=(d&&typeof d==='object'&&!Array.isArray(d))?d:{};
  d.chs=Array.isArray(d.chs)?d.chs.filter(function(c){return c&&typeof c==='object'&&isFinite(c.num)}):[];
  d.lecs=Array.isArray(d.lecs)?d.lecs.filter(function(l){return l&&typeof l==='object'&&isFinite(l.num)}):[];
- d.cards=Array.isArray(d.cards)?d.cards.filter(function(c){return c&&typeof c==='object'}).map(function(c){
-  c.id=+c.id||0;c.k=(c.k==='S'||c.k==='P')?c.k:'L';c.ch=+c.ch||0;c.lec=+c.lec||0;
+ d.cards=Array.isArray(d.cards)?d.cards.filter(function(c){return c&&typeof c==='object'&&c.k!=='P'}).map(function(c){
+  c.id=+c.id||0;c.k=c.k==='S'?'S':'L';c.ch=+c.ch||0;c.lec=+c.lec||0;
   c.label=String(c.label||'');c.text=String(c.text||'');c.due=+c.due||Date.now();
   c.S=+c.S||0;c.D=+c.D||5;c.reps=+c.reps||0;c.lapses=+c.lapses||0;c.last=+c.last||0;
-  c.state=c.state||'new';c.leech=!!c.leech;if(c.k==='P')c.set=+c.set||0;return c;
+  c.state=c.state||'new';c.leech=!!c.leech;return c;
  }).filter(function(c){return c.id>0}):[];
  d.log=Array.isArray(d.log)?d.log.filter(function(l){return l&&isFinite(l.t)}):[];
  d.focus=Array.isArray(d.focus)?d.focus.filter(function(f){return f&&isFinite(f.t)&&isFinite(f.m)}):[];
@@ -192,7 +192,7 @@ function sched(c,g,t){var S,D,lap=0;
   D=cl(D-.8*(g-3),1,10);D=.9*D+.5}
  var iv;
  if(g===1)iv=10/1440;
- else{iv=S*81/19*(Math.pow(DB.set.ret,-2)-1);iv*=(c.k==='P'?.85:1)*chapMod(c.ch);
+ else{iv=S*81/19*(Math.pow(DB.set.ret,-2)-1);iv*=chapMod(c.ch);
   var ex=exam(),left=(ex-t)/DAY;if(ex&&left>0)iv=Math.min(iv,Math.max(1,left/2));
   iv=Math.max(1,iv);if(iv>=3)iv*=1+fuzz(c)}
  return{S:S,D:D,iv:iv,lap:lap}}
@@ -206,16 +206,15 @@ function fmt(d){if(d<1/24)return Math.max(1,Math.round(d*1440))+'m';if(d<1)retur
 function apply(c,g){var t=Date.now(),p=plan(c,g,t),n=p.n;
  c.S=n.S;c.D=n.D;c.reps++;c.lapses+=n.lap;c.last=t;c.state=g===1?'relearn':'review';if(c.lapses>=4)c.leech=true;
  c.due=p.due;DB.log.push({t:t,g:g,c:c.id});if(DB.log.length>4000)DB.log.splice(0,500);save()}
-function dueQ(){var t=Date.now();return DB.cards.filter(function(c){return c.due<=t&&!(c.k==='P'&&c.state==='new')}).sort(function(a,b){return R(a,t)-R(b,t)})}
-function mk(k,chId,lecId,label,text,due){var c={id:DB.nid++,k:k,ch:chId,lec:lecId,label:label||'',text:text||'',due:due,S:0,D:5,reps:0,lapses:0,last:0,state:'new',leech:false};if(k==='P')c.set=0;DB.cards.push(c);return c}
+function dueQ(){var t=Date.now();return DB.cards.filter(function(c){return c.due<=t}).sort(function(a,b){return R(a,t)-R(b,t)})}
+function mk(k,chId,lecId,label,text,due){var c={id:DB.nid++,k:k,ch:chId,lec:lecId,label:label||'',text:text||'',due:due,S:0,D:5,reps:0,lapses:0,last:0,state:'new',leech:false};DB.cards.push(c);return c}
 /* labels are derived, never stored by hand -> editing a chapter/lecture number never leaves stale "Ch1 L2" text */
 function relabel(){
- var seq={},ps={};
+ var seq={};
  DB.cards.slice().sort(function(a,b){return a.id-b.id}).forEach(function(c){
   var cp=ch(c.ch);if(!cp)return;
   if(c.k==='L'){var l=lec(c.lec);if(!l)return;var k='L'+c.lec;seq[k]=(seq[k]||0)+1;c.label='Ch'+cp.num+' L'+l.num+' Q'+seq[k]}
   else if(c.k==='S'){var l2=lec(c.lec);if(!l2)return;c.label='Ch'+cp.num+' L'+l2.num+' Practice Sheet'}
-  else if(c.k==='P'){var k2='P'+c.ch;ps[k2]=(ps[k2]||0)+1;if(!c.set)c.set=ps[k2];c.label='Ch'+cp.num+' PYQ Set '+c.set}
  });
 }
 function sessClean(){if(!sess)return;var has={};DB.cards.forEach(function(c){has[c.id]=1});for(var i=0;i<sess.ids.length;i++)if(!has[sess.ids[i]])sess.ids[i]=0}
@@ -237,9 +236,9 @@ function until(ms){var s=Math.max(0,Math.round(ms/1000));
 function clock(t){return new Date(t).toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'})}
 function readyLabel(t){if(t-Date.now()>20*36e5){var d=new Date(t);return 'On '+d.toLocaleDateString(undefined,{weekday:'long',day:'numeric',month:'short'})+' at '+clock(t)}return 'Around '+clock(t)}
 function nextDue(){var t=Date.now(),best=0;
- DB.cards.forEach(function(c){if(c.k==='P'&&c.state==='new')return;if(c.due>t&&(!best||c.due<best))best=c.due});
+ DB.cards.forEach(function(c){if(c.due>t&&(!best||c.due<best))best=c.due});
  if(!best)return null;
- var n=0;DB.cards.forEach(function(c){if(!(c.k==='P'&&c.state==='new')&&c.due>t&&c.due<=best+6e4)n++});
+ var n=0;DB.cards.forEach(function(c){if(c.due>t&&c.due<=best+6e4)n++});
  return{at:best,n:Math.max(1,n)}}
 function tickNext(){if(tab!=='today')return;var e=$('nxt');if(!e)return;
  var nd=nextDue();
@@ -267,8 +266,8 @@ function vToday(){
   (q.length?'<button class="go" onclick="startAll()">Start review</button><div class="est">'+(q.length-nw)+' review · '+nw+' new · about '+est(q.length)+' min</div>':'')+'</section>';
  if(!q.length&&nd)h+='<section class="stat nxt"><b id="nxt">Next '+nd.n+(nd.n===1?' question':' questions')+' in '+until(nd.at-t)+'</b><p class="sub" id="nxs">'+readyLabel(nd.at)+'. Close the app if you like — it will be waiting right here.</p></section>';
  DB.chs.filter(function(c){return c.done&&!c.testDone}).sort(function(a,b){return a.testDue-b.testDue}).forEach(function(c){
-  var d=Math.ceil((c.testDue-t)/DAY),cs=DB.cards.filter(function(x){return x.ch===c.id}),P=cs.filter(function(x){return x.k==='P'}).length;
-  h+='<button class="note" onclick="testSheet('+c.id+')"><div><b>Chapter '+c.num+' test</b><span>'+(c.testDue<=t?'Ready now':'In '+d+(d===1?' day':' days'))+' · '+cs.length+' cards'+(P?' incl. '+P+' PYQ sets':'')+'</span></div><em>'+(c.testDue<=t?'Start':'View')+'</em></button>'});
+  var d=Math.ceil((c.testDue-t)/DAY),cs=DB.cards.filter(function(x){return x.ch===c.id});
+  h+='<button class="note" onclick="testSheet('+c.id+')"><div><b>Chapter '+c.num+' test</b><span>'+(c.testDue<=t?'Ready now':'In '+d+(d===1?' day':' days'))+' · '+cs.length+' cards</span></div><em>'+(c.testDue<=t?'Start':'View')+'</em></button>'});
  var map={},groups=[];
  q.forEach(function(c){var k=c.lec?'l'+c.lec:'p'+c.ch;
   if(!map[k]){map[k]={k:k,ids:[],cards:[],c:c};groups.push(map[k])}
@@ -276,7 +275,7 @@ function vToday(){
  groups.forEach(function(g){
   g.oldest=g.cards.reduce(function(a,c){return Math.min(a,c.due)},Infinity);
   var hasNew=g.cards.some(function(c){return c.state==='new'}),od=dayStart(g.oldest),st;
-  g.title=(g.c.lec&&lec(g.c.lec))?lname(lec(g.c.lec)):'Ch'+cnum(g.c.ch)+' PYQ sets';
+  g.title=(g.c.lec&&lec(g.c.lec))?lname(lec(g.c.lec)):'Ch'+cnum(g.c.ch)+' questions';
   if(od<dayStart(t)){var days=Math.round((dayStart(t)-od)/DAY);st='Overdue by '+days+(days===1?' day':' days')}
   else if(hasNew)st='New today';else st='Due today';
   g.sub=st+' · about '+est(g.cards.length)+' min';
@@ -288,7 +287,7 @@ function vToday(){
   h+='<p class="sub" style="margin:-6px 0 14px">'+(G.length===1?'1 sitting':G.length+' sittings')+' · '+est(q.length)+' min total · most overdue first</p>';
   G.forEach(function(g,i){h+=row(i,g.title,g.sub,g.ids.length,'startGroup('+i+')')});
  }
- var up=[];for(var o=1;o<=4;o++){var dd=dayStart(t)+o*DAY,nn=DB.cards.filter(function(c){return dayStart(c.due)===dd&&!(c.k==='P'&&c.state==='new')}).length;if(nn)up.push({d:dd,n:nn})}
+ var up=[];for(var o=1;o<=4;o++){var dd=dayStart(t)+o*DAY,nn=DB.cards.filter(function(c){return dayStart(c.due)===dd}).length;if(nn)up.push({d:dd,n:nn})}
  if(up.length){h+='<div class="label">Coming up</div>';up.slice(0,3).forEach(function(x,i){
   h+=row(i,new Date(x.d).toLocaleDateString(undefined,{weekday:'long',day:'numeric',month:'short'}),'questions planned · about '+est(x.n)+' min',x.n,'')})}
  return h}
@@ -296,12 +295,12 @@ function vChapters(){
  var h='<div class="head"><h1>Chapters</h1><p class="sub">'+DB.chs.length+' so far</p></div>';
  if(!DB.chs.length)return h+'<div class="empty"><b>No chapters yet</b><p>Add a lecture to create your first chapter.</p><button class="btn" onclick="addSheet()">Add lecture</button></div>';
  DB.chs.slice().sort(function(a,b){return a.num-b.num}).forEach(function(c){
-  var cs=DB.cards.filter(function(x){return x.ch===c.id}),lr=cs.filter(function(x){return x.reps>0}).length,nl=DB.lecs.filter(function(l){return l.ch===c.id}).length,np=cs.filter(function(x){return x.k==='P'}).length;
-  h+='<button class="chap" onclick="chSheet('+c.id+')"><h3>Ch'+c.num+(c.name?' '+esc(c.name):'')+'</h3><p>'+nl+' lectures'+(np?', '+np+' PYQ sets':'')+(c.done?', complete':'')+'</p><div class="bar"><i style="width:'+(cs.length?Math.round(lr/cs.length*100):0)+'%;background:'+(c.done?'var(--mint)':'var(--blue)')+'"></i></div></button>'});
+  var cs=DB.cards.filter(function(x){return x.ch===c.id}),lr=cs.filter(function(x){return x.reps>0}).length,nl=DB.lecs.filter(function(l){return l.ch===c.id}).length;
+  h+='<button class="chap" onclick="chSheet('+c.id+')"><h3>Ch'+c.num+(c.name?' '+esc(c.name):'')+'</h3><p>'+nl+' lectures'+(c.done?', complete':'')+'</p><div class="bar"><i style="width:'+(cs.length?Math.round(lr/cs.length*100):0)+'%;background:'+(c.done?'var(--mint)':'var(--blue)')+'"></i></div></button>'});
  return h}
 function vProgress(){
  var t=Date.now(),ds=dayStart(t),f=[],i;
- for(i=0;i<14;i++)f.push(DB.cards.filter(function(c){if(c.k==='P'&&c.state==='new')return false;var d=dayStart(c.due);return i===0?c.due<ds+DAY:d===ds+i*DAY}).length);
+ for(i=0;i<14;i++)f.push(DB.cards.filter(function(c){var d=dayStart(c.due);return i===0?c.due<ds+DAY:d===ds+i*DAY}).length);
  var mx=Math.max.apply(null,f.concat([1])),h30=DB.log.filter(function(l){return l.t>t-30*DAY}),ok=h30.filter(function(l){return l.g>1}).length,
  today=DB.log.filter(function(l){return l.t>=ds}).length,days={};DB.log.forEach(function(l){days[dayStart(l.t)]=1});
  var st=0,d=days[ds]?ds:ds-DAY;while(days[d]){st++;d-=DAY}
@@ -344,28 +343,111 @@ function pRes(){var p=DB.pt;closeTrig('recall-timer');p.run=false;p.rem=null;sav
 function pDraw(){var p=DB.pt,L=pLen(p.m),l=pLeft(),s=Math.ceil(l/1000),t=('0'+Math.floor(s/60)).slice(-2)+':'+('0'+s%60).slice(-2);
  if(p.run)document.title=t+' Recall';if(tab!=='focus')return;var a=$('p-t');if(!a)return;a.textContent=t;$('p-r').setAttribute('stroke-dashoffset',603.19*(1-(L-l)/L));$('p-b').textContent=p.run?'Pause':(p.rem==null?'Start':'Resume')}
 function vSettings(){var r=DB.set.ret;
- return '<div class="head"><h1>Settings</h1><p class="sub">Stored on this device</p></div><div class="lbl" style="margin-top:0">Recall target</div><div class="chips">'+[.85,.9,.95].map(function(v){return '<button class="chip '+(r===v?'on':'')+'" onclick="setRet('+v+')">'+Math.round(v*100)+'%</button>'}).join('')+'</div><p class="sub">Higher means more reviews and longer memory.</p><div class="lbl">Exam date</div><input class="in" type="date" value="'+esc(DB.set.exam)+'" onchange="DB.set.exam=this.value;save();toast(\'Saved\')"><p class="sub">Intervals shrink as the exam gets close.</p><div class="lbl">Focus timer (minutes)</div><div class="qrow"><b>Focus</b><input class="in" type="number" min="1" max="120" value="'+(DB.set.fm||25)+'" onchange="setLen(\'fm\',this.value)"></div><div class="qrow"><b>Break</b><input class="in" type="number" min="1" max="60" value="'+(DB.set.bm||5)+'" onchange="setLen(\'bm\',this.value)"></div><div class="qrow"><b>Long break</b><input class="in" type="number" min="1" max="60" value="'+(DB.set.lb||15)+'" onchange="setLen(\'lb\',this.value)"></div><div class="lbl">Daily reminder</div><div class="chips"><button class="chip '+(DB.set.rn?'on':'')+'" onclick="setRem(true)">On</button><button class="chip '+(DB.set.rn?'':'on')+'" onclick="setRem(false)">Off</button></div><input class="in" type="time" value="'+esc(DB.set.rt||'20:00')+'" onchange="DB.set.rt=this.value;save();schedDaily();toast(\'Reminder time saved\')"><p class="sub">Uses your local time. '+remNote()+'</p><button class="btn alt" onclick="testN()">Send test notification</button><div class="lbl">Backup</div><button class="btn alt" onclick="expSheet()">Export data</button><button class="btn alt" style="margin-top:12px" onclick="impSheet()">Import data</button><button class="btn alt" style="margin-top:12px" onclick="sampleSheet()">Load sample data</button><button class="btn bad" onclick="eraseSheet()">Erase everything</button>'}
+ return '<div class="head"><h1>Settings</h1><p class="sub">Stored on this device</p></div><div class="lbl" style="margin-top:0">Recall target</div><div class="chips">'+[.85,.9,.95].map(function(v){return '<button class="chip '+(r===v?'on':'')+'" onclick="setRet('+v+')">'+Math.round(v*100)+'%</button>'}).join('')+'</div><p class="sub">Higher means more reviews and longer memory.</p><div class="lbl">Exam date</div><input class="in" type="date" value="'+esc(DB.set.exam)+'" onchange="DB.set.exam=this.value;save();toast(\'Saved\')"><p class="sub">Intervals shrink as the exam gets close.</p><div class="lbl">Focus timer (minutes)</div><div class="qrow"><b>Focus</b><input class="in" type="number" min="1" max="120" value="'+(DB.set.fm||25)+'" onchange="setLen(\'fm\',this.value)"></div><div class="qrow"><b>Break</b><input class="in" type="number" min="1" max="60" value="'+(DB.set.bm||5)+'" onchange="setLen(\'bm\',this.value)"></div><div class="qrow"><b>Long break</b><input class="in" type="number" min="1" max="60" value="'+(DB.set.lb||15)+'" onchange="setLen(\'lb\',this.value)"></div><div class="lbl">Daily reminder</div><div class="chips"><button class="chip '+(DB.set.rn?'on':'')+'" onclick="setRem(true)">On</button><button class="chip '+(DB.set.rn?'':'on')+'" onclick="setRem(false)">Off</button></div><input class="in" type="time" value="'+esc(DB.set.rt||'20:00')+'" onchange="DB.set.rt=this.value;save();schedDaily();toast(\'Reminder time saved\')"><p class="sub">'+remNote()+'</p><button class="btn alt" onclick="testN()">Send test notification</button><button class="btn alt" style="margin-top:12px" onclick="icsSheet()">Add a calendar reminder</button><div class="lbl">Backup</div><button class="btn alt" onclick="expSheet()">Export data</button><button class="btn alt" style="margin-top:12px" onclick="impSheet()">Import data</button><button class="btn alt" style="margin-top:12px" onclick="sampleSheet()">Load sample data</button><button class="btn bad" onclick="eraseSheet()">Erase everything</button>'}
 function render(){nav();var dn=dueQ().length;lastDue=dn;updTitle(dn);['today','chapters','focus','progress','settings'].forEach(function(k){$('v-'+k).classList.toggle('on',k===tab)});
  $('v-today').innerHTML=vToday();$('v-chapters').innerHTML=vChapters();$('v-focus').innerHTML=vFocus();$('v-progress').innerHTML=vProgress();$('v-settings').innerHTML=vSettings();pDraw()}
-function remNote(){if(typeof Notification==='undefined')return 'Notifications are not available in this browser.';return Notification.permission==='denied'?'Notifications are blocked. Allow them in your browser settings.':'It fires while Recall is open or running in the background. Reminders with the app fully closed need the installed version.'}
-function notify(b,tag){try{if(REG&&REG.showNotification)REG.showNotification('Recall',{body:b,tag:tag||'recall',icon:'icons/icon-192.png',badge:'icons/icon-192.png'});else if(typeof Notification!=='undefined')new Notification('Recall',{body:b})}catch(e){}}
-function setRem(on){if(!on){DB.set.rn=false;save();closeTrig('recall-daily-t');render();return}
- if(typeof Notification==='undefined'){toast('Notifications are not available here');return}
- try{Notification.requestPermission().then(function(p){if(p==='granted'){DB.set.rn=true;if(!DB.set.rt)DB.set.rt='20:00';save();if(REG)regPeriodic(REG);schedDaily();toast('Reminder on')}else toast('Permission was not granted');render()},function(){toast('Permission was not granted');render()})}catch(e){toast('Notifications are not available here')}}
-function testN(){if(typeof Notification!=='undefined'&&Notification.permission==='granted')notify('This is a test reminder.');else toast('Turn the reminder on first')}
-function tick(){if(!DB.set.rn)return;var d=new Date(),k=dayStart(d.getTime()),hm=('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2);
- if(hm<(DB.set.rt||'20:00')||DB.set.ln===k)return;var n=dueQ().length;if(!n)return;
- if(typeof Notification!=='undefined'&&Notification.permission==='granted'){notify(n+' questions are due. Time to recall.');DB.set.ln=k;save()}}
-var REG=null,wantReload=false,hadCtrl=!!(navigator.serviceWorker&&navigator.serviceWorker.controller);
-function snap(){try{if(!window.caches)return;var st={rn:!!DB.set.rn,rt:DB.set.rt||'20:00',ln:DB.set.ln||0,dues:DB.cards.filter(function(c){return!(c.k==='P'&&c.state==='new')}).map(function(c){return c.due})};caches.open('recall-state').then(function(c){return c.put(new URL('state.json',location.href).href,new Response(JSON.stringify(st)))}).catch(function(){})}catch(e){}}
-function regPeriodic(r){try{if(r.periodicSync&&navigator.permissions)navigator.permissions.query({name:'periodic-background-sync'}).then(function(p){if(p.state==='granted')r.periodicSync.register('recall-daily',{minInterval:12*36e5})}).catch(function(){})}catch(e){}}
-function schedTrig(tag,body,ts){try{if(REG&&typeof TimestampTrigger!=='undefined'&&Notification.permission==='granted'&&dueQ().length)REG.showNotification('Recall',{tag:tag,body:body,icon:'icons/icon-192.png',showTrigger:new TimestampTrigger(ts)})}catch(e){}}
-function closeTrig(tag){try{if(REG)REG.getNotifications({tag:tag,includeTriggered:true}).then(function(n){n.forEach(function(x){x.close()})})}catch(e){}}
-function schedDaily(){if(!DB.set.rn)return;var p=(DB.set.rt||'20:00').split(':'),d=new Date();d.setHours(+p[0],+p[1],0,0);if(d.getTime()<=Date.now())d.setDate(d.getDate()+1);schedTrig('recall-daily-t','Time to recall. Your questions are waiting.',d.getTime())}
+/* ---------- reminders ----------
+   Three layers, in order of reliability, all re-arming themselves:
+   1. in-page timer  - exact, works whenever Recall is open (even backgrounded)
+   2. scheduled notification (TimestampTrigger) - one nudge while fully closed,
+      re-armed on every app open, and only if cards will actually be due then
+   3. .ics file - a daily calendar reminder that the phone OS owns, so it works
+      even if the browser gave up on us. */
+var REG=null,wantReload=false,hadCtrl=!!(navigator.serviceWorker&&navigator.serviceWorker.controller),remTimer=null,remSlot=0;
+function remHHMM(){var p=(DB.set.rt||'20:00').split(':');return[cl(parseInt(p[0],10)||0,0,23),cl(parseInt(p[1],10)||0,0,59)]}
+function remAt(){var h=remHHMM(),d=new Date();d.setHours(h[0],h[1],0,0);return d.getTime()}
+function remReady(){return DB.set.rn&&typeof Notification!=='undefined'&&Notification.permission==='granted'}
+function dueBy(ts){return DB.cards.filter(function(c){return c.due<=ts}).length}
+function fireReminder(){var n=dueQ().length;if(!n)return;
+ notify(n+(n===1?' question is':' questions are')+' due. Time to recall.');
+ DB.set.ln=dayStart(Date.now());save()}
+/* re-arms on every call; safe to call as often as you like */
+function armReminder(){
+ clearTimeout(remTimer);remTimer=null;
+ if(!remReady())return;
+ var now=Date.now(),ds=dayStart(now),at=remAt();
+ var handled=(DB.set.ln===ds)||(remSlot===ds),target;
+ if(!handled&&at<=now)target=now+1200;        // time passed while we were asleep
+ else if(!handled)target=at;                  // today's slot is still ahead
+ else target=at+DAY;                          // already done today -> tomorrow
+ if(target<now+1000)target=now+1000;
+ remTimer=setTimeout(function(){
+  remTimer=null;remSlot=dayStart(Date.now());
+  if(!firedToday())fireReminder();
+  armReminder();                              // chain to the next day, always
+ },Math.min(target-now,2147483647));
+}
+function firedToday(){return DB.set.ln===dayStart(Date.now())}
+function tick(){armReminder()}
+function remNote(){
+ if(!DB.set.rn)return 'Off. Turn it on to get a daily nudge at this time.';
+ if(typeof Notification==='undefined')return 'This browser cannot show notifications. Use the calendar reminder below instead.';
+ if(Notification.permission==='denied')return 'Notifications are blocked. Allow them in your browser settings, then turn this on again.';
+ var t=('0'+remHHMM()[0]).slice(-2)+':'+('0'+remHHMM()[1]).slice(-2);
+ if(typeof TimestampTrigger!=='undefined')return 'On. Every day at '+t+', even with Recall closed on this browser.';
+ return 'On. Every day at '+t+' while Recall is open or in the background — this browser cannot wake a closed tab, so also use the calendar reminder below.';
+}
+function notify(b,tag){try{
+ if(REG&&REG.showNotification)REG.showNotification('Recall',{body:b,tag:tag||'recall',icon:'icons/icon-192.png',badge:'icons/icon-192.png'});
+ else if(typeof Notification!=='undefined')new Notification('Recall',{body:b});
+}catch(e){}}
+function setRem(on){
+ if(!on){DB.set.rn=false;clearTimeout(remTimer);remTimer=null;save();closeTrig('recall-daily-t');render();toast('Reminder off');return}
+ if(typeof Notification==='undefined'){toast('This browser cannot show notifications');return}
+ try{
+  Notification.requestPermission().then(function(p){
+   if(p==='granted'){DB.set.rn=true;if(!DB.set.rt)DB.set.rt='20:00';save();if(REG)regPeriodic(REG);schedNext();armReminder();toast('Reminder on')}
+   else toast('Permission was not granted');
+   render();
+  },function(){toast('Permission was not granted');render()});
+ }catch(e){toast('This browser cannot show notifications')}
+}
+function testN(){
+ if(typeof Notification==='undefined'){toast('This browser cannot show notifications');return}
+ if(Notification.permission!=='granted'){toast('Turn the reminder on first');return}
+ notify('This is a test reminder — it works.');
+}
+function snap(){try{if(!window.caches)return;var st={rn:!!DB.set.rn,rt:DB.set.rt||'20:00',ln:DB.set.ln||0,dues:DB.cards.map(function(c){return c.due})};caches.open('recall-state').then(function(c){return c.put(new URL('state.json',location.href).href,new Response(JSON.stringify(st)))}).catch(function(){})}catch(e){}}
+function regPeriodic(r){try{if(r.periodicSync)r.periodicSync.register('recall-daily',{minInterval:12*36e5}).catch(function(){})}catch(e){}}
+function closeTrig(tag){try{if(REG&&REG.getNotifications)REG.getNotifications({tag:tag,includeTriggered:true}).then(function(n){n.forEach(function(x){x.close()})})}catch(e){}}
+/* one pre-armed nudge for the next closed-app slot, with the count it will
+   actually have at that moment (not the count right now) */
+function schedNext(){
+ if(!remReady()||!REG||typeof TimestampTrigger==='undefined')return;
+ try{
+  var at=remAt();if(at<=Date.now())at+=DAY;
+  var n=dueBy(at);if(!n)return;
+  REG.showNotification('Recall',{tag:'recall-daily-t',body:n+(n===1?' question is':' questions are')+' due. Time to recall.',icon:'icons/icon-192.png',showTrigger:new TimestampTrigger(at)});
+ }catch(e){}
+}
+function schedTrig(tag,body,ts){try{
+ if(REG&&typeof TimestampTrigger!=='undefined'&&typeof Notification!=='undefined'&&Notification.permission==='granted')
+  REG.showNotification('Recall',{tag:tag,body:body,icon:'icons/icon-192.png',showTrigger:new TimestampTrigger(ts)});
+}catch(e){}}
+function schedDaily(){schedNext();armReminder()}
+/* a daily calendar reminder that does not depend on the browser at all */
+function icsSheet(){sh('<h2>Calendar reminder</h2><p class="sub">A repeating daily event at '+(('0'+remHHMM()[0]).slice(-2)+':'+('0'+remHHMM()[1]).slice(-2))+' that your phone owns, so it fires even when Recall is closed or the browser is asleep.</p><button class="btn" onclick="dlICS()">Download .ics</button><p class="sub" style="margin-top:14px">Open the downloaded file to add it to your calendar. On iPhone, open it from Files.</p>')}
+function dlICS(){
+ try{
+  var h=remHHMM(),d=new Date();d.setHours(h[0],h[1],0,0);
+  function z(n){return('0'+n).slice(-2)}
+  var ds=''+d.getFullYear()+z(d.getMonth()+1)+z(d.getDate());
+  var lines=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Recall//EN','CALSCALE:GREGORIAN','BEGIN:VEVENT',
+   'UID:recall-daily-'+ds+'@recall','DTSTAMP:'+ds+'T'+z(h[0])+z(h[1])+'00Z','DTSTART:'+ds+'T'+z(h[0])+z(h[1])+'00',
+   'DURATION:PT15M','RRULE:FREQ=DAILY','SUMMARY:Recall — review your questions',
+   'DESCRIPTION:Open Recall and clear what is due today.','BEGIN:VALARM','TRIGGER:PT0M','ACTION:DISPLAY','DESCRIPTION:Recall','END:VALARM',
+   'END:VEVENT','END:VCALENDAR'];
+  var blob=new Blob([lines.join('\r\n')],{type:'text/calendar;charset=utf-8'});
+  var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='recall-reminder.ics';
+  document.body.appendChild(a);a.click();
+  setTimeout(function(){URL.revokeObjectURL(a.href);if(a.parentNode)a.parentNode.removeChild(a)},1500);
+  toast('Calendar file downloaded');
+ }catch(e){toast('Could not create the file')}
+}
 function tryReload(){if(wantReload&&$('ov')&&!$('ov').classList.contains('on'))location.reload()}
 function sw(){if(!('serviceWorker' in navigator)||location.protocol==='file:')return;
  navigator.serviceWorker.addEventListener('controllerchange',function(){if(hadCtrl){wantReload=true;tryReload()}hadCtrl=true});
- navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(function(r){REG=r;regPeriodic(r);schedDaily();snap();setInterval(function(){r.update()},18e5);document.addEventListener('visibilitychange',function(){if(!document.hidden)r.update()})}).catch(function(){})}
+ navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(function(r){REG=r;regPeriodic(r);schedNext();armReminder();snap();setInterval(function(){r.update()},18e5);document.addEventListener('visibilitychange',function(){if(!document.hidden)r.update()})}).catch(function(){})}
 function setRet(v){DB.set.ret=v;save();render()}
 /* sheets */
 function sh(h){$('pan').innerHTML=h;$('sh').classList.add('on')}
@@ -439,11 +521,9 @@ function setLecNum(id){var l=lec(id);if(!l)return;var n=parseInt($('l-num').valu
 function delLec(id){var l=lec(id);if(!l)return;var cn=l.num,cid=l.ch;keep();
  DB.lecs=DB.lecs.filter(function(x){return x.id!==id});DB.cards=DB.cards.filter(function(x){return x.lec!==id});
  sessClean();save();if(ch(cid))chSheet(cid);else closeSh();render();toast('Lecture '+cn+' deleted',true)}
-function compSheet(id){sh('<h2>Complete chapter</h2><p class="sub">The chapter test opens 3 days from now. It covers every lecture question in this chapter plus your PYQ sets.</p><div class="lbl">PYQs in this chapter</div><input class="in" id="c-n" type="number" min="0" inputmode="numeric" placeholder="240"><div class="lbl">Questions per set</div><input class="in" id="c-b" type="number" min="5" value="20" inputmode="numeric"><button class="btn" onclick="doComp('+id+')">Complete chapter</button>')}
-function doComp(id){var c=ch(id);if(!c)return;
- var n=parseInt($('c-n').value,10)||0,b=Math.max(5,parseInt($('c-b').value,10)||20),k,s=Math.ceil(n/b),t=Date.now();
+function compSheet(id){sh('<h2>Complete chapter</h2><p class="sub">Recall will schedule a full-chapter review 3 days from now: every question in this chapter, in one sitting. That is the last spaced pass before the chapter retires.</p><button class="btn" onclick="doComp('+id+')">Complete chapter</button>')}
+function doComp(id){var c=ch(id);if(!c)return;var t=Date.now();
  c.done=true;c.doneAt=t;c.testDue=dayStart(t+3*DAY);
- for(k=1;k<=s;k++){var card=mk('P',id,0,'',c.testDue);card.set=k}
  relabel();save();closeSh();render();toast('Test scheduled in 3 days')}
 function expSheet(){sh('<h2>Export</h2><p class="sub">Copy this text and keep it somewhere safe.</p><textarea class="in" id="ex" readonly style="min-height:180px">'+esc(JSON.stringify(DB))+'</textarea><button class="btn" onclick="cp()">Copy</button>')}
 function cp(){var e=$('ex');if(!e)return;e.select();
@@ -463,7 +543,6 @@ function sample(){var t=Date.now(),i,j,k,n;keep();
  DB=DEF();
  var c2={id:DB.nid++,num:2,name:'Loops',done:true,doneAt:t-5*DAY,testDue:dayStart(t-2*DAY),testDone:false},c3={id:DB.nid++,num:3,name:'Arrays',done:false,doneAt:0,testDue:0,testDone:false};DB.chs.push(c2,c3);
  for(i=1;i<=3;i++){var l={id:DB.nid++,ch:c2.id,num:i};DB.lecs.push(l);for(j=1;j<=6;j++){var mc=mk('L',c2.id,l.id,'','',t);n=Math.random()*5+2;mc.state='review';mc.reps=2+(j%3);mc.lapses=j%5===0?1:0;mc.S=n;mc.D=4+j%4;mc.last=t-n*DAY*(.6+Math.random()*.8);mc.due=mc.last+n*DAY}}
- for(k=1;k<=4;k++){var pc=mk('P',c2.id,0,'',c2.testDue);pc.set=k}
  for(i=1;i<=2;i++){var l2={id:DB.nid++,ch:c3.id,num:i};DB.lecs.push(l2);for(j=1;j<=(i===1?4:7);j++)mk('L',c3.id,l2.id,'','',t);if(i===1)mk('S',c3.id,l2.id,'','',t)}
  for(i=0;i<DB.cards.length;i++)if(DB.cards[i].k==='L'&&Math.random()<.4)DB.cards[i].text='Explain with an example.';
  for(i=1;i<=12;i++){var ds=dayStart(t)-i*DAY,rn=3+(i*7)%9,sn=1+i%3;for(j=0;j<rn;j++)DB.log.push({t:ds+9*36e5+j*6e5,g:Math.random()<.14?1:Math.random()<.5?3:4,c:1});for(j=0;j<sn;j++)DB.focus.push({t:ds+17*36e5+j*36e5,m:25,ch:j%2?c3.id:c2.id})}
@@ -472,12 +551,12 @@ function sample(){var t=Date.now(),i,j,k,n;keep();
 function startAll(){var q=dueQ();begin(q.map(function(c){return c.id}),'Today',0)}
 function startGroup(i){if(!G[i])return;begin(G[i].ids.slice(),'Today',0)}
 function testSheet(id){var c=ch(id);if(!c)return;
- var cs=DB.cards.filter(function(x){return x.ch===id}),L=cs.filter(function(x){return x.k==='L'}).length,S=cs.filter(function(x){return x.k==='S'}).length,P=cs.filter(function(x){return x.k==='P'}).length,t=Date.now(),ready=c.testDue<=t;
- var h='<h2>Ch'+c.num+' test</h2><p class="sub">'+cs.length+' cards: '+L+' questions'+(S?' + '+S+' practice sheets':'')+(P?' + '+P+' PYQ sets':'')+'.</p>';
+ var cs=DB.cards.filter(function(x){return x.ch===id}),L=cs.filter(function(x){return x.k==='L'}).length,S=cs.filter(function(x){return x.k==='S'}).length,t=Date.now(),ready=c.testDue<=t;
+ var h='<h2>Ch'+c.num+' test</h2><p class="sub">'+cs.length+' cards: '+L+' questions'+(S?' + '+S+' practice sheets':'')+'.</p>';
  h+=ready?'<p class="sub">Reviewing the whole chapter in one pass.</p>':'<p class="sub">Scheduled for '+new Date(c.testDue).toLocaleDateString(undefined,{day:'numeric',month:'short'})+'. Starting now reviews it early, which is fine — it just comes back sooner.</p>';
  h+='<button class="btn" onclick="beginTest('+id+')">'+(ready?'Start test':'Start early')+'</button>';
  sh(h)}
-function beginTest(id){var c=ch(id);if(!c)return;var ids=DB.cards.filter(function(x){return x.ch===id}).sort(function(a,b){var O={L:0,S:1,P:2};return(O[a.k]-O[b.k])||a.id-b.id}).map(function(x){return x.id});closeSh();begin(ids,'Test',id)}
+function beginTest(id){var c=ch(id);if(!c)return;var ids=DB.cards.filter(function(x){return x.ch===id}).sort(function(a,b){var O={L:0,S:1};return(O[a.k]-O[b.k])||a.id-b.id}).map(function(x){return x.id});closeSh();begin(ids,'Test',id)}
 function startTest(id){testSheet(id)}
 function begin(ids,t,tc){ids=ids.filter(function(i){return !!DB.cards.filter(function(c){return c.id===i}).length});if(!ids.length){toast('Nothing to review');return}sess={ids:ids,i:0,test:tc,h:[]};$('ov').classList.add('on');show()}
 function cardOf(id){return DB.cards.filter(function(c){return c.id===id})[0]}
@@ -486,7 +565,7 @@ function show(){if(!sess)return;
  while(sess.i<sess.ids.length&&!cardOf(sess.ids[sess.i]))sess.i++;
  if(sess.i>=sess.ids.length){finish();return}
  var c=curCard();if(!c)return;
- $('lab').textContent=c.label;$('ctx').textContent=c.leech?'Failed often. Consider rewriting it.':(c.k==='P'?'PYQ set · '+DB.cards.filter(function(x){return x.ch===c.ch&&x.k==='P'&&x.set===c.set}).length+' in chapter':c.k==='S'?'Practice sheet':'Lecture question');
+ $('lab').textContent=c.label;$('ctx').textContent=c.leech?'Failed often. Consider rewriting it.':(c.k==='S'?'Practice sheet':'Lecture question');
  $('txt').textContent=c.text;$('txt').style.display=c.text?'block':'none';
  $('pb').style.width=(sess.i/sess.ids.length*100)+'%';$('undo').style.visibility=sess.h.length?'visible':'hidden';$('rev').style.display='block';$('gr').classList.remove('on');$('qc').style.display='flex';$('dn').classList.remove('on')}
 function finish(){if(sess&&sess.test&&ch(sess.test)){ch(sess.test).testDone=true;save()}
