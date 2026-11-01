@@ -31,6 +31,8 @@ h1{font-size:38px;line-height:1.02;font-weight:800;letter-spacing:-.03em}
 .hero{background:var(--blue);border-radius:36px;padding:28px 26px 26px;position:relative;overflow:hidden}
 .hero .big{font-size:92px;font-weight:800;line-height:.85;letter-spacing:-.05em}
 .hero p{font-size:16px;font-weight:500;margin-top:14px;max-width:180px;line-height:1.3}
+.hero .est{margin-top:14px;font-size:14px;font-weight:700;opacity:.72}
+.stat.nxt{margin-top:16px}
 .hero .go{margin-top:26px;background:var(--ink);color:#fff;padding:17px 30px;border-radius:999px;font-weight:700;font-size:16px}
 .hero svg{position:absolute;right:-6px;top:22px;width:140px}
 .note{background:var(--sun);border-radius:28px;padding:20px 24px;margin-top:16px;display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;text-align:left}
@@ -225,19 +227,70 @@ function go(k){if(k==='add'){addSheet();return}tab=k;render()}
 function row(i,title,sub,n,oc){var tag=oc?'button':'div',attr=oc?' onclick="'+oc+'"':'',cls=oc?'lec':'lec ro';
  return '<'+tag+' class="'+cls+'"'+attr+'><i style="background:'+COL[i%5]+'"></i><div class="t"><b>'+esc(title)+'</b><span>'+esc(sub)+'</span></div><div class="n">'+(n===''?'':n)+'</div></'+tag+'>'}
 function lname(l){if(!l)return 'Lecture';var c=ch(l.ch);return 'Ch'+(c?c.num:'?')+' Lecture '+l.num}
-/* views */
+/* --- time helpers: "what to study, and when" --- */
+function est(n){return Math.max(1,Math.round(n*.5))}
+function until(ms){var s=Math.max(0,Math.round(ms/1000));
+ if(s>=172800)return Math.round(s/86400)+'d';
+ if(s>=3600)return Math.floor(s/3600)+'h '+('0'+Math.floor(s/60)%60).slice(-2)+'m';
+ if(s>=60)return Math.floor(s/60)+'m '+('0'+s%60).slice(-2)+'s';
+ return s+'s'}
+function clock(t){return new Date(t).toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'})}
+function readyLabel(t){if(t-Date.now()>20*36e5){var d=new Date(t);return 'On '+d.toLocaleDateString(undefined,{weekday:'long',day:'numeric',month:'short'})+' at '+clock(t)}return 'Around '+clock(t)}
+function nextDue(){var t=Date.now(),best=0;
+ DB.cards.forEach(function(c){if(c.k==='P'&&c.state==='new')return;if(c.due>t&&(!best||c.due<best))best=c.due});
+ if(!best)return null;
+ var n=0;DB.cards.forEach(function(c){if(!(c.k==='P'&&c.state==='new')&&c.due>t&&c.due<=best+6e4)n++});
+ return{at:best,n:Math.max(1,n)}}
+function tickNext(){if(tab!=='today')return;var e=$('nxt');if(!e)return;
+ var nd=nextDue();
+ if(!nd){e.textContent='Nothing scheduled ahead';var s0=$('nxs');if(s0)s0.textContent='Add a lecture to keep the chain going.';return}
+ e.textContent='Next '+nd.n+(nd.n===1?' question':' questions')+' in '+until(nd.at-Date.now());
+ var s=$('nxs');if(s)s.textContent=readyLabel(nd.at)+'. Close the app if you like — it will be waiting right here.'}
+/* the Today view used to be a frozen snapshot: cards becoming due never appeared
+   until you navigated or reloaded. Re-render only when the count actually changes,
+   never mid-session, and keep the scroll position. */
+var lastDue=-1,tickN=0;
+function updTitle(n){if(!DB.pt.run)document.title=(n?'('+n+') ':'')+'Recall'}
+function refreshDue(force){if(!$('ov')||$('ov').classList.contains('on'))return;
+ if($('sh')&&$('sh').classList.contains('on'))return;
+ if(tab!=='today'&&tab!=='chapters')return;
+ var el=$('v-'+tab);if(!el)return;var n=dueQ().length;
+ if(!force&&n===lastDue)return;
+ lastDue=n;var st=el.scrollTop;
+ el.innerHTML=tab==='today'?vToday():vChapters();
+ el.scrollTop=st;nav();updTitle(n)}
 function vToday(){
  var h='<div class="head"><h1>Today</h1><p class="sub">'+new Date().toLocaleDateString(undefined,{weekday:'long',day:'numeric',month:'long'})+'</p></div>';
  if(!DB.chs.length)return h+'<div class="empty"><b>Add your first lecture</b><p>Pick a chapter and say how many questions you wrote.</p><button class="btn" onclick="addSheet()">Add lecture</button><button class="btn alt" onclick="sampleSheet()">Try with sample data</button></div>';
- var q=dueQ(),t=Date.now();
- h+='<section class="hero"><svg viewBox="0 0 150 150" aria-hidden="true"><g transform="rotate(-14 75 75)"><rect x="30" y="20" width="84" height="104" rx="22" fill="#FF9A9A"/></g><g transform="rotate(9 75 75)"><rect x="30" y="20" width="84" height="104" rx="22" fill="#FFD771"/></g><rect x="30" y="18" width="84" height="104" rx="22" fill="#fff"/><path d="M92 70a18 18 0 1 1-5-13" fill="none" stroke="#17181C" stroke-width="8" stroke-linecap="round"/></svg><div class="big">'+q.length+'</div><p>'+(q.length?'questions to recall today':'Nothing due. You are all caught up.')+'</p>'+(q.length?'<button class="go" onclick="startAll()">Start review</button>':'')+'</section>';
+ var q=dueQ(),t=Date.now(),nw=q.filter(function(c){return c.state==='new'}).length,nd=nextDue();
+ h+='<section class="hero"><svg viewBox="0 0 150 150" aria-hidden="true"><g transform="rotate(-14 75 75)"><rect x="30" y="20" width="84" height="104" rx="22" fill="#FF9A9A"/></g><g transform="rotate(9 75 75)"><rect x="30" y="20" width="84" height="104" rx="22" fill="#FFD771"/></g><rect x="30" y="18" width="84" height="104" rx="22" fill="#fff"/><path d="M92 70a18 18 0 1 1-5-13" fill="none" stroke="#17181C" stroke-width="8" stroke-linecap="round"/></svg><div class="big">'+q.length+'</div><p>'+(q.length?'questions to recall today':'Nothing due right now. You are all caught up.')+'</p>'+
+  (q.length?'<button class="go" onclick="startAll()">Start review</button><div class="est">'+(q.length-nw)+' review · '+nw+' new · about '+est(q.length)+' min</div>':'')+'</section>';
+ if(!q.length&&nd)h+='<section class="stat nxt"><b id="nxt">Next '+nd.n+(nd.n===1?' question':' questions')+' in '+until(nd.at-t)+'</b><p class="sub" id="nxs">'+readyLabel(nd.at)+'. Close the app if you like — it will be waiting right here.</p></section>';
  DB.chs.filter(function(c){return c.done&&!c.testDone}).sort(function(a,b){return a.testDue-b.testDue}).forEach(function(c){
   var d=Math.ceil((c.testDue-t)/DAY),cs=DB.cards.filter(function(x){return x.ch===c.id}),P=cs.filter(function(x){return x.k==='P'}).length;
   h+='<button class="note" onclick="testSheet('+c.id+')"><div><b>Chapter '+c.num+' test</b><span>'+(c.testDue<=t?'Ready now':'In '+d+(d===1?' day':' days'))+' · '+cs.length+' cards'+(P?' incl. '+P+' PYQ sets':'')+'</span></div><em>'+(c.testDue<=t?'Start':'View')+'</em></button>'});
- var m={};G=[];q.forEach(function(c){var k=c.lec?'l'+c.lec:'p'+c.ch;if(!m[k]){m[k]={k:k,ids:[],nw:false,c:c};G.push(m[k])}m[k].ids.push(c.id);if(c.state==='new')m[k].nw=true});
- if(G.length){h+='<div class="label">By lecture</div>';G.forEach(function(g,i){h+=row(i,g.c.lec&&lec(g.c.lec)?lname(lec(g.c.lec)):'Ch'+cnum(g.c.ch)+' PYQ sets',g.nw?'New today':'Review',g.ids.length,'startGroup('+i+')')})}
- var up=[];for(var o=1;o<=3;o++){var dd=dayStart(t)+o*DAY,nn=DB.cards.filter(function(c){return dayStart(c.due)===dd&&!(c.k==='P'&&c.state==='new')}).length;if(nn)up.push({d:dd,n:nn})}
- if(up.length){h+='<div class="label">Coming up</div>';up.forEach(function(x,i){h+=row(i,new Date(x.d).toLocaleDateString(undefined,{weekday:'long',day:'numeric',month:'short'}),'questions planned',x.n,'')})}
+ var map={},groups=[];
+ q.forEach(function(c){var k=c.lec?'l'+c.lec:'p'+c.ch;
+  if(!map[k]){map[k]={k:k,ids:[],cards:[],c:c};groups.push(map[k])}
+  map[k].ids.push(c.id);map[k].cards.push(c)});
+ groups.forEach(function(g){
+  g.oldest=g.cards.reduce(function(a,c){return Math.min(a,c.due)},Infinity);
+  var hasNew=g.cards.some(function(c){return c.state==='new'}),od=dayStart(g.oldest),st;
+  g.title=(g.c.lec&&lec(g.c.lec))?lname(lec(g.c.lec)):'Ch'+cnum(g.c.ch)+' PYQ sets';
+  if(od<dayStart(t)){var days=Math.round((dayStart(t)-od)/DAY);st='Overdue by '+days+(days===1?' day':' days')}
+  else if(hasNew)st='New today';else st='Due today';
+  g.sub=st+' · about '+est(g.cards.length)+' min';
+ });
+ groups.sort(function(a,b){return a.oldest-b.oldest});
+ G=groups;
+ if(G.length){
+  h+='<div class="label">Today\u2019s plan</div>';
+  h+='<p class="sub" style="margin:-6px 0 14px">'+(G.length===1?'1 sitting':G.length+' sittings')+' · '+est(q.length)+' min total · most overdue first</p>';
+  G.forEach(function(g,i){h+=row(i,g.title,g.sub,g.ids.length,'startGroup('+i+')')});
+ }
+ var up=[];for(var o=1;o<=4;o++){var dd=dayStart(t)+o*DAY,nn=DB.cards.filter(function(c){return dayStart(c.due)===dd&&!(c.k==='P'&&c.state==='new')}).length;if(nn)up.push({d:dd,n:nn})}
+ if(up.length){h+='<div class="label">Coming up</div>';up.slice(0,3).forEach(function(x,i){
+  h+=row(i,new Date(x.d).toLocaleDateString(undefined,{weekday:'long',day:'numeric',month:'short'}),'questions planned · about '+est(x.n)+' min',x.n,'')})}
  return h}
 function vChapters(){
  var h='<div class="head"><h1>Chapters</h1><p class="sub">'+DB.chs.length+' so far</p></div>';
@@ -292,7 +345,7 @@ function pDraw(){var p=DB.pt,L=pLen(p.m),l=pLeft(),s=Math.ceil(l/1000),t=('0'+Ma
  if(p.run)document.title=t+' Recall';if(tab!=='focus')return;var a=$('p-t');if(!a)return;a.textContent=t;$('p-r').setAttribute('stroke-dashoffset',603.19*(1-(L-l)/L));$('p-b').textContent=p.run?'Pause':(p.rem==null?'Start':'Resume')}
 function vSettings(){var r=DB.set.ret;
  return '<div class="head"><h1>Settings</h1><p class="sub">Stored on this device</p></div><div class="lbl" style="margin-top:0">Recall target</div><div class="chips">'+[.85,.9,.95].map(function(v){return '<button class="chip '+(r===v?'on':'')+'" onclick="setRet('+v+')">'+Math.round(v*100)+'%</button>'}).join('')+'</div><p class="sub">Higher means more reviews and longer memory.</p><div class="lbl">Exam date</div><input class="in" type="date" value="'+esc(DB.set.exam)+'" onchange="DB.set.exam=this.value;save();toast(\'Saved\')"><p class="sub">Intervals shrink as the exam gets close.</p><div class="lbl">Focus timer (minutes)</div><div class="qrow"><b>Focus</b><input class="in" type="number" min="1" max="120" value="'+(DB.set.fm||25)+'" onchange="setLen(\'fm\',this.value)"></div><div class="qrow"><b>Break</b><input class="in" type="number" min="1" max="60" value="'+(DB.set.bm||5)+'" onchange="setLen(\'bm\',this.value)"></div><div class="qrow"><b>Long break</b><input class="in" type="number" min="1" max="60" value="'+(DB.set.lb||15)+'" onchange="setLen(\'lb\',this.value)"></div><div class="lbl">Daily reminder</div><div class="chips"><button class="chip '+(DB.set.rn?'on':'')+'" onclick="setRem(true)">On</button><button class="chip '+(DB.set.rn?'':'on')+'" onclick="setRem(false)">Off</button></div><input class="in" type="time" value="'+esc(DB.set.rt||'20:00')+'" onchange="DB.set.rt=this.value;save();schedDaily();toast(\'Reminder time saved\')"><p class="sub">Uses your local time. '+remNote()+'</p><button class="btn alt" onclick="testN()">Send test notification</button><div class="lbl">Backup</div><button class="btn alt" onclick="expSheet()">Export data</button><button class="btn alt" style="margin-top:12px" onclick="impSheet()">Import data</button><button class="btn alt" style="margin-top:12px" onclick="sampleSheet()">Load sample data</button><button class="btn bad" onclick="eraseSheet()">Erase everything</button>'}
-function render(){nav();var dn=dueQ().length;if(!DB.pt.run)document.title=(dn?'('+dn+') ':'')+'Recall';['today','chapters','focus','progress','settings'].forEach(function(k){$('v-'+k).classList.toggle('on',k===tab)});
+function render(){nav();var dn=dueQ().length;lastDue=dn;updTitle(dn);['today','chapters','focus','progress','settings'].forEach(function(k){$('v-'+k).classList.toggle('on',k===tab)});
  $('v-today').innerHTML=vToday();$('v-chapters').innerHTML=vChapters();$('v-focus').innerHTML=vFocus();$('v-progress').innerHTML=vProgress();$('v-settings').innerHTML=vSettings();pDraw()}
 function remNote(){if(typeof Notification==='undefined')return 'Notifications are not available in this browser.';return Notification.permission==='denied'?'Notifications are blocked. Allow them in your browser settings.':'It fires while Recall is open or running in the background. Reminders with the app fully closed need the installed version.'}
 function notify(b,tag){try{if(REG&&REG.showNotification)REG.showNotification('Recall',{body:b,tag:tag||'recall',icon:'icons/icon-192.png',badge:'icons/icon-192.png'});else if(typeof Notification!=='undefined')new Notification('Recall',{body:b})}catch(e){}}
@@ -316,7 +369,7 @@ function sw(){if(!('serviceWorker' in navigator)||location.protocol==='file:')re
 function setRet(v){DB.set.ret=v;save();render()}
 /* sheets */
 function sh(h){$('pan').innerHTML=h;$('sh').classList.add('on')}
-function closeSh(){$('sh').classList.remove('on')}
+function closeSh(){$('sh').classList.remove('on');refreshDue(true)}
 function addSheet(id){
  var o=DB.chs.slice().sort(function(a,b){return a.num-b.num}).map(function(c){return '<option value="'+c.id+'"'+(c.id===id?' selected':'')+'>Ch'+c.num+(c.name?' '+esc(c.name):'')+'</option>'}).join('')+'<option value="new">+ New chapter</option>';
  sh('<h2>Add lecture</h2><div class="lbl">Chapter</div><select class="in" id="a-ch" onchange="aTog()">'+o+'</select><div id="a-new"><input class="in" id="a-num" type="number" min="1" inputmode="numeric" placeholder="Chapter number"><input class="in" id="a-name" placeholder="Chapter name (optional)"></div><div class="lbl">How many questions?</div><input class="in" id="a-n" type="number" min="1" max="60" inputmode="numeric" placeholder="8"><div class="lbl">Question text (optional, one per line)</div><textarea class="in" id="a-t" placeholder="Leave empty and fill them in later"></textarea><label class="chk"><input type="checkbox" id="a-ps"> This lecture has a practice sheet</label><button class="btn" onclick="doAdd()">Add lecture</button>');
@@ -393,7 +446,11 @@ function doComp(id){var c=ch(id);if(!c)return;
  for(k=1;k<=s;k++){var card=mk('P',id,0,'',c.testDue);card.set=k}
  relabel();save();closeSh();render();toast('Test scheduled in 3 days')}
 function expSheet(){sh('<h2>Export</h2><p class="sub">Copy this text and keep it somewhere safe.</p><textarea class="in" id="ex" readonly style="min-height:180px">'+esc(JSON.stringify(DB))+'</textarea><button class="btn" onclick="cp()">Copy</button>')}
-function cp(){var e=$('ex');e.select();try{navigator.clipboard.writeText(e.value).then(function(){toast('Copied')},function(){document.execCommand('copy');toast('Copied')})}catch(x){document.execCommand('copy');toast('Copied')}}
+function cp(){var e=$('ex');if(!e)return;e.select();
+ function okc(){toast('Copied')}
+ function manual(){try{document.execCommand('copy');okc()}catch(x){toast('Text selected — press Ctrl/Cmd+C')}}
+ try{if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(e.value).then(okc,manual);return}}catch(x){}
+ manual()}
 function impSheet(){sh('<h2>Import</h2><p class="sub">Paste exported text. This replaces your current data.</p><textarea class="in" id="im" style="min-height:180px"></textarea><button class="btn" onclick="doImp()">Import</button>')}
 function doImp(){try{var d=JSON.parse($('im').value);
  if(!d||typeof d!=='object'||(!d.chs&&!d.cards))throw 0;
@@ -449,7 +506,7 @@ function grade(g){if(!sess)return;var c0=curCard();
  if(!c0){sess.i++;show();return}
  sess.h.push({id:c0.id,s:JSON.stringify(c0),l:DB.log.length});apply(c0,g);sess.i++;
  if(sess.i>=sess.ids.length)finish();else show()}
-function closeReview(){$('ov').classList.remove('on');sess=null;render();setTimeout(tryReload,300)}
+function closeReview(){$('ov').classList.remove('on');sess=null;render();tickNext();setTimeout(tryReload,300)}
 document.addEventListener('keydown',function(e){
  if(e.key!=='Escape')return;
  if($('sh')&&$('sh').classList.contains('on')){closeSh();return}
@@ -459,7 +516,7 @@ function wipe(){try{localStorage.removeItem(KEY)}catch(e){}location.reload()}
 function boot(){try{load();fix();render()}catch(e){
  DB=DEF();
  try{$('v-today').innerHTML='<div class="head"><h1>Recall</h1></div><div class="empty"><b>Your saved data could not be read</b><p>That can happen after an interrupted save or a bad import. Reset to start clean, or try reloading first.</p><button class="btn" onclick="location.reload()">Reload</button><button class="btn bad" onclick="wipe()">Reset data</button></div>';$('v-today').classList.add('on');$('nav').innerHTML=''}catch(x){} }}
-boot();setInterval(function(){if(DB.pt.run&&pLeft()<=0)pEnd(true);else pDraw()},1000);setInterval(tick,30000);document.addEventListener('visibilitychange',tick);tick();sw();schedDaily();setInterval(tryReload,5000);
+boot();setInterval(function(){if(DB.pt.run&&pLeft()<=0)pEnd(true);else pDraw();tickNext();if(++tickN%5===0)refreshDue()},1000);setInterval(tick,30000);document.addEventListener('visibilitychange',function(){tick();if(!document.hidden)refreshDue(true);tickNext()});tick();sw();schedDaily();setInterval(tryReload,5000);
 </script>
 </body>
 </html>

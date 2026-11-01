@@ -3,6 +3,7 @@
 > **Status after the fix pass (branch `arena/674395e5-recall`).**
 > Fixed: #1 bad import bricking the app, #2 `nid`/duplicate ids, #4 PYQ visibility (now surfaced with counts + an honest test sheet), #5 interval preview now equals the stored interval, #7 test readiness is explained instead of silently ignored, #8 timer Skip saves partial focus, #9 storage-full is surfaced, #10 mid-session delete crash, #12 SW precache list + all-or-nothing install, #14 export carries a schema version, #15 dialog roles / Escape / aria-current / aria-live, #16 muted-text contrast, #17 nav on 320px screens, #18 render cost, plus a new editing layer (chapters, lectures, questions) and single-tap delete with Undo.
 > Also: the zip workflow can no longer rewrite the working tree from a feature branch, and `recall-app.zip` has been regenerated from this source so it can no longer clobber the fixes.
+> Later pass: Today view now live-refreshes as cards fall due (it used to be a frozen snapshot until you reopened the app), shows a live "next batch in …" countdown, and lays out an explicit plan (n sittings, time estimates, overdue-first ordering).
 > Still open by choice: #3 (zip is still the deploy input — recommend deleting it), #6 (full reminder rework), #11 (SW build stamping relies on the zip), #13 (self-host the font), #19 (session caps, post-exam mode, dark mode).
 >
 > The rest of this document is the original audit, left as written.
