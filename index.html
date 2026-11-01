@@ -630,7 +630,7 @@ function sample(){var t=Date.now(),i,j,k;keep();DB=DEF();
 /* ---------- review: one question at a time, rated on how well you remembered it ---------- */
 function startAll(){begin(dueLecs().map(function(x){return x.l.id}),'Today',0)}
 function startOne(id){begin([id],'Today',0)}
-function beginChapter(id){var ids=DB.lecs.filter(function(l){return l.ch===id}).map(function(l){return l.id});closeSh();begin(ids,'Chapter',0)}
+function beginChapter(id){var ids=DB.lecs.filter(function(l){return l.ch===id}).map(function(l){return l.id});closeSh();begin(ids,'Chapter',0,true)}
 function testSheet(id){var c=ch(id);if(!c)return;
  var ls=DB.lecs.filter(function(l){return l.ch===id}),n=DB.cards.filter(function(x){return x.ch===id}).length;
  var t=Date.now(),ready=c.testDue<=t;
@@ -639,25 +639,29 @@ function testSheet(id){var c=ch(id);if(!c)return;
  h+='<button class="btn" onclick="beginTest('+id+')">'+(ready?'Start test':'Start early')+'</button>';
  sh(h)}
 function beginTest(id){var c=ch(id);if(!c)return;closeSh();
- begin(DB.lecs.filter(function(l){return l.ch===id}).sort(function(a,b){return a.num-b.num}).map(function(l){return l.id}),'Test',id)}
+ begin(DB.lecs.filter(function(l){return l.ch===id}).sort(function(a,b){return a.num-b.num}).map(function(l){return l.id}),'Test',id,true)}
 function startTest(id){testSheet(id)}
-function begin(ids,t,tc){
- ids=ids.filter(function(i){return !!lec(i)&&pendOf(i).length});
- if(!ids.length){toast('Nothing due');return}
- sess={ids:ids,i:0,test:tc,h:[],rated:0,total:0};
- ids.forEach(function(i){sess.total+=pendOf(i).length});
+function begin(ids,t,tc,all){
+ ids=ids.filter(function(i){return !!lec(i)});
+ var qs=[];
+ ids.forEach(function(i){(all?qsOf(i):pendOf(i)).forEach(function(c){qs.push(c.id)})});
+ if(!qs.length){toast(all?'No questions in this chapter yet':'Nothing due');return}
+ sess={ids:ids,test:tc,h:[],rated:0,total:qs.length,q:qs,j:0,all:!!all};
  $('ov').classList.add('on');$('ov').classList.remove('fin');$('dn').classList.remove('on');
  show();
 }
-function curQ(){if(!sess)return null;var p=pendOf(sess.ids[sess.i]);return p[0]||null}
+function curQ(){
+ if(!sess)return null;
+ while(sess.j<sess.q.length&&!DB.cards.some(function(c){return c.id===sess.q[sess.j]}))sess.j++;
+ var id=sess.q[sess.j];
+ return DB.cards.filter(function(c){return c.id===id})[0]||null;
+}
 function show(){
  if(!sess)return;
- while(sess.i<sess.ids.length&&!pendOf(sess.ids[sess.i]).length)sess.i++;
- if(sess.i>=sess.ids.length){finish();return}
- var l=lec(sess.ids[sess.i]),qs=qsOf(l.id),c=curQ();
- if(!c||!l){finish();return}
- var idx=qs.map(function(x){return x.id}).indexOf(c.id)+1;
- $('lab').textContent=lname(l);
+ var c=curQ();
+ if(!c){finish();return}
+ var l=lec(c.lec),qs=qsOf(c.lec),idx=qs.map(function(x){return x.id}).indexOf(c.id)+1;
+ $('lab').textContent=l?lname(l):'Question';
  $('ctx').textContent='Question '+idx+' of '+qs.length+(c.lastG?' · last time '+GRADE[c.lastG]:' · first time');
  $('txt').textContent=c.text||('Q'+idx);
  drawGrades(c);
@@ -676,10 +680,20 @@ function drawGrades(c){
 function gradeQ(g){
  if(!sess)return;
  var c=curQ();if(!c)return;
- sess.h.push({id:c.id,s:JSON.stringify(c),l:DB.log.length});
- c.lastG=g;sess.rated++;
+ sess.h.push({id:c.id,s:JSON.stringify(c),l:DB.log.length,j:sess.j});
+ c.lastG=g;sess.rated++;sess.j++;
  applyQ(c,g);
  show();
+}
+function undo(){if(!sess)return;var h=sess.h.pop();if(!h)return;
+ var c=DB.cards.filter(function(x){return x.id===h.id})[0];
+ if(c){var o=JSON.parse(h.s);                        // restore the question exactly, not just its keys
+  Object.keys(c).forEach(function(k){delete c[k]});Object.assign(c,o);}
+ DB.log.length=h.l;sess.rated=Math.max(0,sess.rated-1);
+ sess.j=(h.j==null?Math.max(0,sess.j-1):h.j);
+ if(sess.test&&ch(sess.test))ch(sess.test).testDone=false;
+ $('ov').classList.remove('fin');$('dn').classList.remove('on');
+ save();show();
 }
 function finish(){
  if(sess&&sess.test&&ch(sess.test)){ch(sess.test).testDone=true;save()}
@@ -688,16 +702,6 @@ function finish(){
  $('undo').style.visibility=(sess&&sess.h.length)?'visible':'hidden';
  $('dsub').textContent=n+(n===1?' question rated.':' questions rated.');
  $('dn').classList.add('on');
-}
-function undo(){if(!sess)return;var h=sess.h.pop();if(!h)return;
- var c=DB.cards.filter(function(x){return x.id===h.id})[0];
- if(c){var o=JSON.parse(h.s);                        // restore the question exactly, not just its keys
-  Object.keys(c).forEach(function(k){delete c[k]});Object.assign(c,o);
-  var k=sess.ids.indexOf(c.lec);if(k>=0)sess.i=k}
- DB.log.length=h.l;sess.rated=Math.max(0,sess.rated-1);
- if(sess.test&&ch(sess.test))ch(sess.test).testDone=false;
- $('ov').classList.remove('fin');$('dn').classList.remove('on');
- save();show();
 }
 function closeReview(){$('ov').classList.remove('on');$('ov').classList.remove('fin');sess=null;render();tickNext();setTimeout(tryReload,300)}
 document.addEventListener('keydown',function(e){
