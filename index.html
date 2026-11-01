@@ -15,14 +15,14 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#EAF1FF;--card:#FFFFFF;--soft:#F1F3F8;--ink:#17181C;--mute:#6F7587;--blue:#8FA6FF;--coral:#FF9A9A;--sun:#FFD771;--mint:#86DDAE;--lilac:#CDB4FF;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+:root{--bg:#EAF1FF;--card:#FFFFFF;--soft:#F1F3F8;--ink:#17181C;--mute:#5A6070;--blue:#8FA6FF;--coral:#FF9A9A;--sun:#FFD771;--mint:#86DDAE;--lilac:#CDB4FF;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 *{box-sizing:border-box;margin:0}
 html,body{height:100%}
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
-body{background:var(--bg);color:var(--ink);font-family:"Bricolage Grotesque",system-ui,-apple-system,"Segoe UI",sans-serif;display:flex;justify-content:center}
+body{background:var(--bg);color:var(--ink);font-family:"Bricolage Grotesque",system-ui,-apple-system,"Segoe UI",sans-serif;display:flex;justify-content:center;min-height:100dvh}
 button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
 button:focus-visible,.in:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
-.app{width:100%;max-width:430px;height:100%;position:relative;overflow:hidden}
+.app{width:100%;max-width:430px;height:100%;height:100dvh;position:relative;overflow:hidden}
 .view{display:none;height:100%;overflow-y:auto;padding:36px 24px 120px}
 .view.on{display:block}
 h1{font-size:38px;line-height:1.02;font-weight:800;letter-spacing:-.03em}
@@ -53,8 +53,8 @@ h1{font-size:38px;line-height:1.02;font-weight:800;letter-spacing:-.03em}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px}
 .tile{border-radius:30px;padding:22px;min-height:150px;display:flex;flex-direction:column;justify-content:space-between}
 .tile b{font-size:52px;font-weight:800;line-height:1;letter-spacing:-.04em}.tile b.sm{font-size:36px;white-space:nowrap}.tile span{font-size:15px;font-weight:600}
-nav{position:absolute;left:18px;right:18px;bottom:calc(18px + env(safe-area-inset-bottom,0px));background:var(--ink);border-radius:999px;display:flex;justify-content:space-between;align-items:center;padding:8px;z-index:3}
-nav button{color:#A9AEC2;width:48px;height:48px;border-radius:50%;display:grid;place-items:center}
+nav{position:absolute;left:14px;right:14px;bottom:calc(18px + env(safe-area-inset-bottom,0px));background:var(--ink);border-radius:999px;display:flex;justify-content:space-between;align-items:center;padding:8px;z-index:3}
+nav button{color:#A9AEC2;flex:1 1 0;min-width:0;max-width:56px;height:48px;border-radius:50%;display:grid;place-items:center}
 nav button.on{background:#fff;color:var(--ink)}
 nav button.plus{background:var(--coral);color:var(--ink)}
 nav svg,.ic{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
@@ -89,20 +89,26 @@ textarea.in{min-height:96px;resize:vertical}
 .btn{width:100%;padding:18px;border-radius:999px;background:var(--ink);color:#fff;font-weight:700;font-size:16px;margin-top:18px}
 .btn.alt{background:var(--card);color:var(--ink)}.btn.bad{background:var(--coral);color:var(--ink)}
 .qrow{display:flex;gap:12px;align-items:center;margin-top:12px}
-.qrow b{font-size:14px;width:78px;flex:none}.qrow .in{margin:0}
+.qrow b{font-size:14px;width:78px;flex:none}.qrow .in{margin:0;flex:1;width:auto;min-width:0}
 .chk{display:flex;gap:12px;align-items:center;margin-top:20px;font-weight:600;font-size:15px}.chk input{width:22px;height:22px;accent-color:#17181C}
+.lec.ro{cursor:default}
+.x2{width:42px;height:42px;flex:none;border-radius:50%;background:var(--card);display:grid;place-items:center;font-size:24px;line-height:1;font-weight:600;color:var(--mute)}
+.x2:hover{background:var(--soft)}
+.pan h2+ .sub{margin-top:8px}
 .ring{background:var(--card);border-radius:40px;padding:26px;text-align:center;position:relative}.ring svg{width:240px;height:240px;transform:rotate(-90deg)}.ring .c{position:absolute;left:0;right:0;top:26px;height:240px;display:flex;flex-direction:column;align-items:center;justify-content:center}.ring .c b{font-size:58px;font-weight:800;letter-spacing:-.04em;line-height:1}.ring .c span{font-size:15px;color:var(--mute);margin-top:8px;font-weight:600}
 .dots{display:flex;gap:10px;justify-content:center;margin-top:14px}.dots i{width:12px;height:12px;border-radius:50%;background:var(--soft)}.dots i.on{background:var(--coral)}
 .prow{display:flex;gap:10px;margin-top:16px}.prow .btn{margin-top:0}.prow .btn:first-child{flex:1}.prow .btn.alt{width:auto;padding:18px 22px}
 .fcl{display:flex;gap:7px;margin-top:8px}.fcl span{flex:1;text-align:center;font-size:12px;color:var(--mute);font-weight:700}
-.toast{position:absolute;left:50%;bottom:100px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:11px 20px;border-radius:999px;font-weight:700;font-size:14px;z-index:20;opacity:0;pointer-events:none;transition:opacity .2s;white-space:nowrap}
+.toast{position:absolute;left:50%;bottom:100px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:9px 10px 9px 20px;border-radius:999px;font-weight:700;font-size:14px;z-index:20;opacity:0;pointer-events:none;transition:opacity .2s;white-space:nowrap;display:flex;align-items:center;gap:12px;max-width:calc(100% - 36px)}
+.toast span{overflow:hidden;text-overflow:ellipsis}
+.toast button{flex:none;background:#fff;color:var(--ink);border-radius:999px;padding:8px 16px;font-weight:800;font-size:13px;pointer-events:auto;display:none}
 .toast.on{opacity:1}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
 <body>
 <div class="app">
-<div class="toast" id="toast"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"><span id="tm"></span><button id="tb" type="button" onclick="restore()">Undo</button></div>
 <main class="view on" id="v-today"></main>
 <main class="view" id="v-chapters"></main>
 <main class="view" id="v-focus"></main>
@@ -110,7 +116,7 @@ textarea.in{min-height:96px;resize:vertical}
 <main class="view" id="v-settings"></main>
 <nav id="nav"></nav>
 
-<div class="ov" id="ov">
+<div class="ov" id="ov" role="dialog" aria-modal="true" aria-label="Review">
   <div class="prog"><button class="x" onclick="closeReview()" aria-label="Close"><svg class="ic" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button><div class="bar"><i id="pb" style="width:0;background:var(--blue)"></i></div><button class="x" id="undo" onclick="undo()" aria-label="Undo last grade" style="visibility:hidden"><svg class="ic" viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></svg></button></div>
   <div class="qcard" id="qc"><div class="lab" id="lab"></div><div class="ctx" id="ctx"></div><div class="txt" id="txt"></div></div>
   <button class="reveal" id="rev" onclick="reveal()">Reveal</button>
@@ -121,24 +127,61 @@ textarea.in{min-height:96px;resize:vertical}
     <button class="reveal" style="margin-top:32px" onclick="closeReview()">Back to Today</button>
   </div>
 </div>
-<div class="sheet" id="sh" onclick="if(event.target===this)closeSh()"><div class="pan" id="pan"></div></div>
+<div class="sheet" id="sh" role="dialog" aria-modal="true" onclick="if(event.target===this)closeSh()"><div class="pan" id="pan"></div></div>
 </div>
 <script>
-var DAY=864e5,COL=['var(--coral)','var(--sun)','var(--mint)','var(--blue)','var(--lilac)'],KEY='recall.v1';
-var DB={chs:[],lecs:[],cards:[],log:[],focus:[],pt:{m:'focus',run:false,end:0,rem:null,cy:0,ch:0},set:{ret:.9,exam:''},nid:1},tab='today',sess=null,G=[],armed=null;
+var DAY=864e5,COL=['var(--coral)','var(--sun)','var(--mint)','var(--blue)','var(--lilac)'],KEY='recall.v1',VER=2;
+function DEF(){return{chs:[],lecs:[],cards:[],log:[],focus:[],pt:{m:'focus',run:false,end:0,rem:null,cy:0,ch:0},set:{ret:.9,exam:'',fm:25,bm:5,lb:15,rt:'20:00'},nid:1,v:VER}}
+var DB=DEF(),tab='today',sess=null,G=[],LAST=null,toastT=null,saveWarned=false;
 function $(s){return document.getElementById(s)}
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(m){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]})}
 function cl(v,a,b){return Math.min(b,Math.max(a,v))}
 function dayStart(t){var d=new Date(t);d.setHours(0,0,0,0);return d.getTime()}
-function save(){try{localStorage.setItem(KEY,JSON.stringify(DB))}catch(e){}snap()}
-function load(){try{var j=localStorage.getItem(KEY);if(j){var d=JSON.parse(j);if(d&&d.chs)DB=d}}catch(e){}}
-function toast(m){var t=$('toast');t.textContent=m;t.classList.add('on');setTimeout(function(){t.classList.remove('on')},1800)}
+function toast(m,undo){var t=$('toast');if(!t)return;$('tm').textContent=m;$('tb').style.display=undo?'inline-block':'none';t.classList.add('on');clearTimeout(toastT);toastT=setTimeout(function(){t.classList.remove('on')},undo?6000:1900)}
+function keep(){try{LAST=JSON.parse(JSON.stringify({chs:DB.chs,lecs:DB.lecs,cards:DB.cards,log:DB.log,focus:DB.focus}))}catch(e){LAST=null}}
+function restore(){if(!LAST)return;DB.chs=LAST.chs;DB.lecs=LAST.lecs;DB.cards=LAST.cards;DB.log=LAST.log;DB.focus=LAST.focus;LAST=null;save();sessClean();render();toast('Restored')}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(DB))}catch(e){if(!saveWarned){saveWarned=true;toast('Storage is full — export a backup')}}snap()}
+function load(){try{var j=localStorage.getItem(KEY);if(j)DB=normalize(JSON.parse(j))}catch(e){DB=DEF()}}
+/* --- schema: every key and every card field gets a safe default --- */
+function normalize(d){
+ d=(d&&typeof d==='object'&&!Array.isArray(d))?d:{};
+ d.chs=Array.isArray(d.chs)?d.chs.filter(function(c){return c&&typeof c==='object'&&isFinite(c.num)}):[];
+ d.lecs=Array.isArray(d.lecs)?d.lecs.filter(function(l){return l&&typeof l==='object'&&isFinite(l.num)}):[];
+ d.cards=Array.isArray(d.cards)?d.cards.filter(function(c){return c&&typeof c==='object'}).map(function(c){
+  c.id=+c.id||0;c.k=(c.k==='S'||c.k==='P')?c.k:'L';c.ch=+c.ch||0;c.lec=+c.lec||0;
+  c.label=String(c.label||'');c.text=String(c.text||'');c.due=+c.due||Date.now();
+  c.S=+c.S||0;c.D=+c.D||5;c.reps=+c.reps||0;c.lapses=+c.lapses||0;c.last=+c.last||0;
+  c.state=c.state||'new';c.leech=!!c.leech;if(c.k==='P')c.set=+c.set||0;return c;
+ }).filter(function(c){return c.id>0}):[];
+ d.log=Array.isArray(d.log)?d.log.filter(function(l){return l&&isFinite(l.t)}):[];
+ d.focus=Array.isArray(d.focus)?d.focus.filter(function(f){return f&&isFinite(f.t)&&isFinite(f.m)}):[];
+ d.pt=Object.assign({m:'focus',run:false,end:0,rem:null,cy:0,ch:0},(d.pt&&typeof d.pt==='object')?d.pt:{});
+ if(['focus','break','long'].indexOf(d.pt.m)<0)d.pt.m='focus';
+ d.set=Object.assign({ret:.9,exam:'',fm:25,bm:5,lb:15,rt:'20:00'},(d.set&&typeof d.set==='object')?d.set:{});
+ if([.85,.9,.95].indexOf(+d.set.ret)<0)d.set.ret=.9;
+ d.chs=d.chs.filter(function(c){c.id=+c.id||0;c.num=+c.num||1;c.name=String(c.name||'');c.done=!!c.done;c.doneAt=+c.doneAt||0;c.testDue=+c.testDue||0;c.testDone=!!c.testDone;return c.id>0});
+ d.lecs=d.lecs.filter(function(l){l.id=+l.id||0;l.ch=+l.ch||0;l.num=+l.num||1;return l.id>0});
+ d.nid=fixIds(d);d.v=VER;
+ return d;
+}
+function fixIds(d){
+ var seen={},mx=0;
+ function bump(o){if(+o.id>mx)mx=+o.id}
+ d.chs.forEach(bump);d.lecs.forEach(bump);d.cards.forEach(bump);
+ var nid=Math.max(mx+1,+d.nid||1);
+ d.cards.forEach(function(c){if(seen[c.id])c.id=nid++;seen[c.id]=1});
+ d.chs.forEach(function(c){seen[c.id]=1});d.lecs.forEach(function(l){seen[l.id]=1});
+ return nid;
+}
+function fix(){DB=normalize(DB);relabel()}
 function ch(id){return DB.chs.filter(function(c){return c.id===id})[0]}
 function lec(id){return DB.lecs.filter(function(c){return c.id===id})[0]}
+function cnum(id){var c=ch(id);return c?c.num:'?'}
 function exam(){return DB.set.exam?new Date(DB.set.exam+'T00:00:00').getTime():0}
 /* scheduler: FSRS-style memory model */
 function R(c,t){if(c.state==='new')return 0;return Math.pow(1+19/81*Math.max(0,t-c.last)/DAY/c.S,-.5)}
 function chapMod(id){var r=0,l=0;DB.cards.forEach(function(c){if(c.ch===id){r+=c.reps;l+=c.lapses}});return r<6?1:cl(1-.5*l/r,.7,1)}
+function fuzz(c){var h=Math.abs((c.id*2654435761+c.reps*97)%1000);return (h/1000-.5)*.1}
 function sched(c,g,t){var S,D,lap=0;
  if(c.state==='new'){S=[.4,1,3,8][g-1];D=cl(5-(g-3)*1.2,1,10)}
  else{var r=R(c,t);D=c.D;
@@ -149,40 +192,56 @@ function sched(c,g,t){var S,D,lap=0;
  if(g===1)iv=10/1440;
  else{iv=S*81/19*(Math.pow(DB.set.ret,-2)-1);iv*=(c.k==='P'?.85:1)*chapMod(c.ch);
   var ex=exam(),left=(ex-t)/DAY;if(ex&&left>0)iv=Math.min(iv,Math.max(1,left/2));
-  iv=Math.max(1,iv);if(iv>=3)iv*=1+(Math.random()-.5)*.1}
+  iv=Math.max(1,iv);if(iv>=3)iv*=1+fuzz(c)}
  return{S:S,D:D,iv:iv,lap:lap}}
+function balance(c,due,t){var base=dayStart(due),best=base,bc=1e9;
+ [-1,0,1,2].forEach(function(o){var d=base+o*DAY;if(d<dayStart(t)+DAY)return;
+  var k=DB.cards.filter(function(x){return x!==c&&dayStart(x.due)===d}).length+Math.abs(o)*.5;if(k<bc){bc=k;best=d}});
+ return best}
+/* one source of truth: what the grade button previews is exactly what gets stored */
+function plan(c,g,t){var n=sched(c,g,t),due=t+n.iv*DAY;if(n.iv>=3)due=balance(c,due,t);return{n:n,due:due}}
 function fmt(d){if(d<1/24)return Math.max(1,Math.round(d*1440))+'m';if(d<1)return Math.round(d*24)+'h';if(d<30)return Math.round(d)+'d';return Math.round(d/30)+'mo'}
-function apply(c,g){var t=Date.now(),n=sched(c,g,t);
+function apply(c,g){var t=Date.now(),p=plan(c,g,t),n=p.n;
  c.S=n.S;c.D=n.D;c.reps++;c.lapses+=n.lap;c.last=t;c.state=g===1?'relearn':'review';if(c.lapses>=4)c.leech=true;
- var due=t+n.iv*DAY;
- if(n.iv>=3){var base=dayStart(due),best=base,bc=1e9;
-  [-1,0,1,2].forEach(function(o){var d=base+o*DAY;if(d<dayStart(t)+DAY)return;
-   var k=DB.cards.filter(function(x){return x!==c&&dayStart(x.due)===d}).length+Math.abs(o)*.5;if(k<bc){bc=k;best=d}});
-  due=best}
- c.due=due;DB.log.push({t:t,g:g,c:c.id});if(DB.log.length>4000)DB.log.splice(0,500);save()}
+ c.due=p.due;DB.log.push({t:t,g:g,c:c.id});if(DB.log.length>4000)DB.log.splice(0,500);save()}
 function dueQ(){var t=Date.now();return DB.cards.filter(function(c){return c.due<=t&&!(c.k==='P'&&c.state==='new')}).sort(function(a,b){return R(a,t)-R(b,t)})}
-function mk(k,chId,lecId,label,text,due){DB.cards.push({id:DB.nid++,k:k,ch:chId,lec:lecId,label:label,text:text||'',due:due,S:0,D:5,reps:0,lapses:0,last:0,state:'new',leech:false})}
+function mk(k,chId,lecId,label,text,due){var c={id:DB.nid++,k:k,ch:chId,lec:lecId,label:label||'',text:text||'',due:due,S:0,D:5,reps:0,lapses:0,last:0,state:'new',leech:false};if(k==='P')c.set=0;DB.cards.push(c);return c}
+/* labels are derived, never stored by hand -> editing a chapter/lecture number never leaves stale "Ch1 L2" text */
+function relabel(){
+ var seq={},ps={};
+ DB.cards.slice().sort(function(a,b){return a.id-b.id}).forEach(function(c){
+  var cp=ch(c.ch);if(!cp)return;
+  if(c.k==='L'){var l=lec(c.lec);if(!l)return;var k='L'+c.lec;seq[k]=(seq[k]||0)+1;c.label='Ch'+cp.num+' L'+l.num+' Q'+seq[k]}
+  else if(c.k==='S'){var l2=lec(c.lec);if(!l2)return;c.label='Ch'+cp.num+' L'+l2.num+' Practice Sheet'}
+  else if(c.k==='P'){var k2='P'+c.ch;ps[k2]=(ps[k2]||0)+1;if(!c.set)c.set=ps[k2];c.label='Ch'+cp.num+' PYQ Set '+c.set}
+ });
+}
+function sessClean(){if(!sess)return;var has={};DB.cards.forEach(function(c){has[c.id]=1});for(var i=0;i<sess.ids.length;i++)if(!has[sess.ids[i]])sess.ids[i]=0}
 /* icons */
 var IC={today:'<path d="M4 11l8-7 8 7v8a1 1 0 0 1-1 1h-4v-6h-6v6H5a1 1 0 0 1-1-1z"/>',chapters:'<path d="M5 4h10a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z"/><path d="M5 17a3 3 0 0 1 3-3h10"/>',add:'<path d="M12 5v14M5 12h14"/>',progress:'<path d="M5 20V10M12 20V4M19 20v-7"/>',focus:'<circle cx="12" cy="13" r="7"/><path d="M12 9v4l2.5 2M9.5 3h5"/>',settings:'<path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/>'};
 var NAMES={today:'Today',chapters:'Chapters',add:'Add lecture',progress:'Progress',focus:'Focus',settings:'Settings'};
-function nav(){$('nav').innerHTML=['today','chapters','add','focus','progress','settings'].map(function(k){return '<button class="'+(k===tab?'on':'')+(k==='add'?' plus':'')+'" aria-label="'+NAMES[k]+'" onclick="go(\''+k+'\')"><svg viewBox="0 0 24 24">'+IC[k]+'</svg></button>'}).join('')}
+function nav(){$('nav').innerHTML=['today','chapters','add','focus','progress','settings'].map(function(k){return '<button class="'+(k===tab?'on':'')+(k==='add'?' plus':'')+'" aria-label="'+NAMES[k]+'"'+(k===tab?' aria-current="page"':'')+' onclick="go(\''+k+'\')"><svg viewBox="0 0 24 24" aria-hidden="true">'+IC[k]+'</svg></button>'}).join('')}
 function go(k){if(k==='add'){addSheet();return}tab=k;render()}
-function row(i,title,sub,n,oc){return '<button class="lec" onclick="'+oc+'"><i style="background:'+COL[i%5]+'"></i><div class="t"><b>'+esc(title)+'</b><span>'+esc(sub)+'</span></div><div class="n">'+n+'</div></button>'}
-function lname(l){return 'Ch'+ch(l.ch).num+' Lecture '+l.num}
+function row(i,title,sub,n,oc){var tag=oc?'button':'div',attr=oc?' onclick="'+oc+'"':'',cls=oc?'lec':'lec ro';
+ return '<'+tag+' class="'+cls+'"'+attr+'><i style="background:'+COL[i%5]+'"></i><div class="t"><b>'+esc(title)+'</b><span>'+esc(sub)+'</span></div><div class="n">'+(n===''?'':n)+'</div></'+tag+'>'}
+function lname(l){if(!l)return 'Lecture';var c=ch(l.ch);return 'Ch'+(c?c.num:'?')+' Lecture '+l.num}
 /* views */
 function vToday(){
  var h='<div class="head"><h1>Today</h1><p class="sub">'+new Date().toLocaleDateString(undefined,{weekday:'long',day:'numeric',month:'long'})+'</p></div>';
- if(!DB.chs.length)return h+'<div class="empty"><b>Add your first lecture</b><p>Pick a chapter and say how many questions you wrote.</p><button class="btn" onclick="addSheet()">Add lecture</button><button class="btn alt" onclick="sample()">Try with sample data</button></div>';
+ if(!DB.chs.length)return h+'<div class="empty"><b>Add your first lecture</b><p>Pick a chapter and say how many questions you wrote.</p><button class="btn" onclick="addSheet()">Add lecture</button><button class="btn alt" onclick="sampleSheet()">Try with sample data</button></div>';
  var q=dueQ(),t=Date.now();
  h+='<section class="hero"><svg viewBox="0 0 150 150" aria-hidden="true"><g transform="rotate(-14 75 75)"><rect x="30" y="20" width="84" height="104" rx="22" fill="#FF9A9A"/></g><g transform="rotate(9 75 75)"><rect x="30" y="20" width="84" height="104" rx="22" fill="#FFD771"/></g><rect x="30" y="18" width="84" height="104" rx="22" fill="#fff"/><path d="M92 70a18 18 0 1 1-5-13" fill="none" stroke="#17181C" stroke-width="8" stroke-linecap="round"/></svg><div class="big">'+q.length+'</div><p>'+(q.length?'questions to recall today':'Nothing due. You are all caught up.')+'</p>'+(q.length?'<button class="go" onclick="startAll()">Start review</button>':'')+'</section>';
- DB.chs.filter(function(c){return c.done&&!c.testDone}).forEach(function(c){var d=Math.ceil((c.testDue-t)/DAY);
-  h+='<button class="note" onclick="startTest('+c.id+')"><div><b>Chapter '+c.num+' test</b><span>'+(c.testDue<=t?'Ready now':'In '+d+(d===1?' day':' days'))+'</span></div><em>'+(c.testDue<=t?'Start':'Early')+'</em></button>'});
+ DB.chs.filter(function(c){return c.done&&!c.testDone}).sort(function(a,b){return a.testDue-b.testDue}).forEach(function(c){
+  var d=Math.ceil((c.testDue-t)/DAY),cs=DB.cards.filter(function(x){return x.ch===c.id}),P=cs.filter(function(x){return x.k==='P'}).length;
+  h+='<button class="note" onclick="testSheet('+c.id+')"><div><b>Chapter '+c.num+' test</b><span>'+(c.testDue<=t?'Ready now':'In '+d+(d===1?' day':' days'))+' · '+cs.length+' cards'+(P?' incl. '+P+' PYQ sets':'')+'</span></div><em>'+(c.testDue<=t?'Start':'View')+'</em></button>'});
  var m={};G=[];q.forEach(function(c){var k=c.lec?'l'+c.lec:'p'+c.ch;if(!m[k]){m[k]={k:k,ids:[],nw:false,c:c};G.push(m[k])}m[k].ids.push(c.id);if(c.state==='new')m[k].nw=true});
- if(G.length){h+='<div class="label">By lecture</div>';G.forEach(function(g,i){h+=row(i,g.c.lec?lname(lec(g.c.lec)):'Ch'+ch(g.c.ch).num+' PYQ sets',g.nw?'New today':'Review',g.ids.length,'startGroup('+i+')')})}
+ if(G.length){h+='<div class="label">By lecture</div>';G.forEach(function(g,i){h+=row(i,g.c.lec&&lec(g.c.lec)?lname(lec(g.c.lec)):'Ch'+cnum(g.c.ch)+' PYQ sets',g.nw?'New today':'Review',g.ids.length,'startGroup('+i+')')})}
+ var up=[];for(var o=1;o<=3;o++){var dd=dayStart(t)+o*DAY,nn=DB.cards.filter(function(c){return dayStart(c.due)===dd&&!(c.k==='P'&&c.state==='new')}).length;if(nn)up.push({d:dd,n:nn})}
+ if(up.length){h+='<div class="label">Coming up</div>';up.forEach(function(x,i){h+=row(i,new Date(x.d).toLocaleDateString(undefined,{weekday:'long',day:'numeric',month:'short'}),'questions planned',x.n,'')})}
  return h}
 function vChapters(){
  var h='<div class="head"><h1>Chapters</h1><p class="sub">'+DB.chs.length+' so far</p></div>';
- if(!DB.chs.length)return h+'<div class="empty"><b>No chapters yet</b><p>Add a lecture to create your first chapter.</p></div>';
+ if(!DB.chs.length)return h+'<div class="empty"><b>No chapters yet</b><p>Add a lecture to create your first chapter.</p><button class="btn" onclick="addSheet()">Add lecture</button></div>';
  DB.chs.slice().sort(function(a,b){return a.num-b.num}).forEach(function(c){
   var cs=DB.cards.filter(function(x){return x.ch===c.id}),lr=cs.filter(function(x){return x.reps>0}).length,nl=DB.lecs.filter(function(l){return l.ch===c.id}).length,np=cs.filter(function(x){return x.k==='P'}).length;
   h+='<button class="chap" onclick="chSheet('+c.id+')"><h3>Ch'+c.num+(c.name?' '+esc(c.name):'')+'</h3><p>'+nl+' lectures'+(np?', '+np+' PYQ sets':'')+(c.done?', complete':'')+'</p><div class="bar"><i style="width:'+(cs.length?Math.round(lr/cs.length*100):0)+'%;background:'+(c.done?'var(--mint)':'var(--blue)')+'"></i></div></button>'});
@@ -199,7 +258,7 @@ function vProgress(){
  var wk=DB.chs.map(function(c){var r=0,l=0;DB.cards.forEach(function(x){if(x.ch===c.id){r+=x.reps;l+=x.lapses}});return{c:c,r:r,p:r?l/r:0}}).filter(function(x){return x.r>=5}).sort(function(a,b){return b.p-a.p}).slice(0,3);
  if(wk.length){h+='<div class="label">Needs the most work</div>';wk.forEach(function(x,i){h+=row(i,'Ch'+x.c.num+(x.c.name?' '+x.c.name:''),Math.round(x.p*100)+'% of reviews failed',x.r,'chSheet('+x.c.id+')')})}
  var lc=DB.cards.filter(function(c){return c.leech}).slice(0,5);
- if(lc.length){h+='<div class="label">Rewrite these</div>';lc.forEach(function(c,i){h+=row(i,c.label,'Failed '+c.lapses+' times','','')})}
+ if(lc.length){h+='<div class="label">Rewrite these</div>';lc.forEach(function(c,i){h+=row(i,c.label,'Failed '+c.lapses+' times',c.lec,'lecSheet('+c.lec+')')})}
  return h}
 function mm(m){return m<60?m+'m':Math.floor(m/60)+'h '+(m%60)+'m'}
 function pLen(m){var s=DB.set;return(m==='focus'?(s.fm||25):m==='break'?(s.bm||5):(s.lb||15))*60000}
@@ -207,7 +266,7 @@ function pLeft(){var p=DB.pt;return p.run?Math.max(0,p.end-Date.now()):(p.rem==n
 function setLen(k,v){DB.set[k]=cl(parseInt(v,10)||1,1,120);DB.pt.rem=null;save();toast('Saved')}
 function vFocus(){var p=DB.pt,t=Date.now(),ds=dayStart(t),f=DB.focus,i,h='<div class="head"><h1>Focus</h1><p class="sub">'+(p.m==='focus'?'Session '+(p.cy%4+1)+' of 4':p.m==='break'?'Short break':'Long break')+'</p></div>',fill=(p.m==='long'?4:p.cy%4);
  h+='<section class="ring"><svg viewBox="0 0 240 240"><circle cx="120" cy="120" r="96" fill="none" stroke="#F1F3F8" stroke-width="18"/><circle id="p-r" cx="120" cy="120" r="96" fill="none" stroke="'+(p.m==='focus'?'#FF9A9A':'#86DDAE')+'" stroke-width="18" stroke-linecap="round" stroke-dasharray="603.19" stroke-dashoffset="603.19"/></svg><div class="c"><b id="p-t">00:00</b><span>'+(p.m==='focus'?'Focus':'Rest')+'</span></div><div class="dots">'+[0,1,2,3].map(function(k){return '<i class="'+(k<fill?'on':'')+'"></i>'}).join('')+'</div></section>';
- h+='<select class="in" onchange="DB.pt.ch=parseInt(this.value,10)||0;save()" aria-label="Chapter"><option value="0">No chapter</option>'+DB.chs.map(function(c){return '<option value="'+c.id+'"'+(p.ch===c.id?' selected':'')+'>Ch'+c.num+(c.name?' '+esc(c.name):'')+'</option>'}).join('')+'</select>';
+ h+='<select class="in" onchange="DB.pt.ch=parseInt(this.value,10)||0;save()" aria-label="Chapter"><option value="0">No chapter</option>'+DB.chs.slice().sort(function(a,b){return a.num-b.num}).map(function(c){return '<option value="'+c.id+'"'+(p.ch===c.id?' selected':'')+'>Ch'+c.num+(c.name?' '+esc(c.name):'')+'</option>'}).join('')+'</select>';
  h+='<div class="prow"><button class="btn" id="p-b" onclick="pTog()">Start</button><button class="btn alt" onclick="pEnd(false)">Skip</button><button class="btn alt" onclick="pRes()">Reset</button></div>';
  var sum=function(a,b){return f.filter(function(x){return x.t>=a&&x.t<b}).reduce(function(n,x){return n+x.m},0)},td=sum(ds,ds+DAY),wk=sum(ds-6*DAY,ds+DAY),rv=DB.log.filter(function(l){return l.t>=ds}).length,bars=[],lb=[];
  for(i=6;i>=0;i--){bars.push(sum(ds-i*DAY,ds-i*DAY+DAY));lb.push(new Date(ds-i*DAY).toLocaleDateString(undefined,{weekday:'narrow'}))}
@@ -222,7 +281,9 @@ function vFocus(){var p=DB.pt,t=Date.now(),ds=dayStart(t),f=DB.focus,i,h='<div c
 function beep(){try{var a=new(window.AudioContext||window.webkitAudioContext)(),o=a.createOscillator(),g=a.createGain();o.connect(g);g.connect(a.destination);o.frequency.value=660;g.gain.setValueAtTime(.2,a.currentTime);g.gain.exponentialRampToValueAtTime(.001,a.currentTime+.8);o.start();o.stop(a.currentTime+.8)}catch(e){}}
 function pTog(){var p=DB.pt;if(p.run){p.rem=pLeft();p.run=false;closeTrig('recall-timer')}else{p.end=Date.now()+pLeft();p.run=true;schedTrig('recall-timer',p.m==='focus'?'Focus complete. Take a break.':'Break over. Ready to focus?',p.end)}save();pDraw()}
 function pEnd(auto){var p=DB.pt,L=pLen(p.m),left=pLeft();if(!auto)closeTrig('recall-timer');
- if(p.m==='focus'){var mn=auto?Math.round(L/60000):Math.round((L-left)/60000);if(mn>=1)DB.focus.push({t:Date.now(),m:mn,ch:p.ch});if(auto)p.cy++;p.m=auto&&p.cy%4===0?'long':'break'}else p.m='focus';
+ if(p.m==='focus'){var el=auto?L:(L-left),mn=Math.max(1,Math.round(el/60000));
+  if(el>=30000){DB.focus.push({t:Date.now(),m:mn,ch:p.ch});if(!auto)toast('Saved '+mn+'m of focus')}
+  if(auto)p.cy++;p.m=auto&&p.cy%4===0?'long':'break'}else p.m='focus';
  p.run=false;p.rem=null;save();
  if(auto){var msg=p.m==='focus'?'Break over. Ready to focus?':'Focus complete. Take a break.';notify(msg,'recall-timer');beep();toast(msg)}
  if(tab==='focus')render()}
@@ -230,26 +291,25 @@ function pRes(){var p=DB.pt;closeTrig('recall-timer');p.run=false;p.rem=null;sav
 function pDraw(){var p=DB.pt,L=pLen(p.m),l=pLeft(),s=Math.ceil(l/1000),t=('0'+Math.floor(s/60)).slice(-2)+':'+('0'+s%60).slice(-2);
  if(p.run)document.title=t+' Recall';if(tab!=='focus')return;var a=$('p-t');if(!a)return;a.textContent=t;$('p-r').setAttribute('stroke-dashoffset',603.19*(1-(L-l)/L));$('p-b').textContent=p.run?'Pause':(p.rem==null?'Start':'Resume')}
 function vSettings(){var r=DB.set.ret;
- return '<div class="head"><h1>Settings</h1><p class="sub">Stored on this device</p></div><div class="lbl" style="margin-top:0">Recall target</div><div class="chips">'+[.85,.9,.95].map(function(v){return '<button class="chip '+(r===v?'on':'')+'" onclick="setRet('+v+')">'+Math.round(v*100)+'%</button>'}).join('')+'</div><p class="sub">Higher means more reviews and longer memory.</p><div class="lbl">Exam date</div><input class="in" type="date" value="'+esc(DB.set.exam)+'" onchange="DB.set.exam=this.value;save();toast(\'Saved\')"><p class="sub">Intervals shrink as the exam gets close.</p><div class="lbl">Focus timer (minutes)</div><div class="qrow"><b>Focus</b><input class="in" type="number" min="1" max="120" value="'+(DB.set.fm||25)+'" onchange="setLen(\'fm\',this.value)"></div><div class="qrow"><b>Break</b><input class="in" type="number" min="1" max="60" value="'+(DB.set.bm||5)+'" onchange="setLen(\'bm\',this.value)"></div><div class="qrow"><b>Long break</b><input class="in" type="number" min="1" max="60" value="'+(DB.set.lb||15)+'" onchange="setLen(\'lb\',this.value)"></div><div class="lbl">Daily reminder</div><div class="chips"><button class="chip '+(DB.set.rn?'on':'')+'" onclick="setRem(true)">On</button><button class="chip '+(DB.set.rn?'':'on')+'" onclick="setRem(false)">Off</button></div><input class="in" type="time" value="'+esc(DB.set.rt||'20:00')+'" onchange="DB.set.rt=this.value;save();schedDaily();toast(\'Reminder time saved\')"><p class="sub">Uses your local time. '+remNote()+'</p><button class="btn alt" onclick="testN()">Send test notification</button><div class="lbl">Backup</div><button class="btn alt" onclick="expSheet()">Export data</button><button class="btn alt" style="margin-top:12px" onclick="impSheet()">Import data</button><button class="btn alt" style="margin-top:12px" onclick="arm(this,sample)">Load sample data</button><button class="btn bad" onclick="arm(this,reset)">Erase everything</button>'}
+ return '<div class="head"><h1>Settings</h1><p class="sub">Stored on this device</p></div><div class="lbl" style="margin-top:0">Recall target</div><div class="chips">'+[.85,.9,.95].map(function(v){return '<button class="chip '+(r===v?'on':'')+'" onclick="setRet('+v+')">'+Math.round(v*100)+'%</button>'}).join('')+'</div><p class="sub">Higher means more reviews and longer memory.</p><div class="lbl">Exam date</div><input class="in" type="date" value="'+esc(DB.set.exam)+'" onchange="DB.set.exam=this.value;save();toast(\'Saved\')"><p class="sub">Intervals shrink as the exam gets close.</p><div class="lbl">Focus timer (minutes)</div><div class="qrow"><b>Focus</b><input class="in" type="number" min="1" max="120" value="'+(DB.set.fm||25)+'" onchange="setLen(\'fm\',this.value)"></div><div class="qrow"><b>Break</b><input class="in" type="number" min="1" max="60" value="'+(DB.set.bm||5)+'" onchange="setLen(\'bm\',this.value)"></div><div class="qrow"><b>Long break</b><input class="in" type="number" min="1" max="60" value="'+(DB.set.lb||15)+'" onchange="setLen(\'lb\',this.value)"></div><div class="lbl">Daily reminder</div><div class="chips"><button class="chip '+(DB.set.rn?'on':'')+'" onclick="setRem(true)">On</button><button class="chip '+(DB.set.rn?'':'on')+'" onclick="setRem(false)">Off</button></div><input class="in" type="time" value="'+esc(DB.set.rt||'20:00')+'" onchange="DB.set.rt=this.value;save();schedDaily();toast(\'Reminder time saved\')"><p class="sub">Uses your local time. '+remNote()+'</p><button class="btn alt" onclick="testN()">Send test notification</button><div class="lbl">Backup</div><button class="btn alt" onclick="expSheet()">Export data</button><button class="btn alt" style="margin-top:12px" onclick="impSheet()">Import data</button><button class="btn alt" style="margin-top:12px" onclick="sampleSheet()">Load sample data</button><button class="btn bad" onclick="eraseSheet()">Erase everything</button>'}
 function render(){nav();var dn=dueQ().length;if(!DB.pt.run)document.title=(dn?'('+dn+') ':'')+'Recall';['today','chapters','focus','progress','settings'].forEach(function(k){$('v-'+k).classList.toggle('on',k===tab)});
  $('v-today').innerHTML=vToday();$('v-chapters').innerHTML=vChapters();$('v-focus').innerHTML=vFocus();$('v-progress').innerHTML=vProgress();$('v-settings').innerHTML=vSettings();pDraw()}
-function arm(b,fn){if(armed===b){armed=null;fn();return}armed=b;var o=b.textContent;b.textContent='Tap again to confirm';setTimeout(function(){if(armed===b){armed=null;b.textContent=o}},2500)}
 function remNote(){if(typeof Notification==='undefined')return 'Notifications are not available in this browser.';return Notification.permission==='denied'?'Notifications are blocked. Allow them in your browser settings.':'It fires while Recall is open or running in the background. Reminders with the app fully closed need the installed version.'}
-function notify(b,tag){try{if(REG&&REG.showNotification)REG.showNotification('Recall',{body:b,tag:tag||'recall',icon:'icons/icon-192.png',badge:'icons/icon-192.png'});else new Notification('Recall',{body:b})}catch(e){}}
+function notify(b,tag){try{if(REG&&REG.showNotification)REG.showNotification('Recall',{body:b,tag:tag||'recall',icon:'icons/icon-192.png',badge:'icons/icon-192.png'});else if(typeof Notification!=='undefined')new Notification('Recall',{body:b})}catch(e){}}
 function setRem(on){if(!on){DB.set.rn=false;save();closeTrig('recall-daily-t');render();return}
  if(typeof Notification==='undefined'){toast('Notifications are not available here');return}
- try{Notification.requestPermission().then(function(p){if(p==='granted'){DB.set.rn=true;if(!DB.set.rt)DB.set.rt='20:00';save();if(REG)regPeriodic(REG);schedDaily();toast('Reminder on')}else toast('Permission was not granted');render()})}catch(e){toast('Notifications are not available here')}}
+ try{Notification.requestPermission().then(function(p){if(p==='granted'){DB.set.rn=true;if(!DB.set.rt)DB.set.rt='20:00';save();if(REG)regPeriodic(REG);schedDaily();toast('Reminder on')}else toast('Permission was not granted');render()},function(){toast('Permission was not granted');render()})}catch(e){toast('Notifications are not available here')}}
 function testN(){if(typeof Notification!=='undefined'&&Notification.permission==='granted')notify('This is a test reminder.');else toast('Turn the reminder on first')}
 function tick(){if(!DB.set.rn)return;var d=new Date(),k=dayStart(d.getTime()),hm=('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2);
  if(hm<(DB.set.rt||'20:00')||DB.set.ln===k)return;var n=dueQ().length;if(!n)return;
  if(typeof Notification!=='undefined'&&Notification.permission==='granted'){notify(n+' questions are due. Time to recall.');DB.set.ln=k;save()}}
 var REG=null,wantReload=false,hadCtrl=!!(navigator.serviceWorker&&navigator.serviceWorker.controller);
 function snap(){try{if(!window.caches)return;var st={rn:!!DB.set.rn,rt:DB.set.rt||'20:00',ln:DB.set.ln||0,dues:DB.cards.filter(function(c){return!(c.k==='P'&&c.state==='new')}).map(function(c){return c.due})};caches.open('recall-state').then(function(c){return c.put(new URL('state.json',location.href).href,new Response(JSON.stringify(st)))}).catch(function(){})}catch(e){}}
-function regPeriodic(r){try{if(r.periodicSync&&navigator.permissions)navigator.permissions.query({name:'periodic-background-sync'}).then(function(p){if(p.state==='granted')r.periodicSync.register('recall-daily',{minInterval:36e5})}).catch(function(){})}catch(e){}}
-function schedTrig(tag,body,ts){try{if(REG&&typeof TimestampTrigger!=='undefined'&&Notification.permission==='granted')REG.showNotification('Recall',{tag:tag,body:body,icon:'icons/icon-192.png',showTrigger:new TimestampTrigger(ts)})}catch(e){}}
+function regPeriodic(r){try{if(r.periodicSync&&navigator.permissions)navigator.permissions.query({name:'periodic-background-sync'}).then(function(p){if(p.state==='granted')r.periodicSync.register('recall-daily',{minInterval:12*36e5})}).catch(function(){})}catch(e){}}
+function schedTrig(tag,body,ts){try{if(REG&&typeof TimestampTrigger!=='undefined'&&Notification.permission==='granted'&&dueQ().length)REG.showNotification('Recall',{tag:tag,body:body,icon:'icons/icon-192.png',showTrigger:new TimestampTrigger(ts)})}catch(e){}}
 function closeTrig(tag){try{if(REG)REG.getNotifications({tag:tag,includeTriggered:true}).then(function(n){n.forEach(function(x){x.close()})})}catch(e){}}
 function schedDaily(){if(!DB.set.rn)return;var p=(DB.set.rt||'20:00').split(':'),d=new Date();d.setHours(+p[0],+p[1],0,0);if(d.getTime()<=Date.now())d.setDate(d.getDate()+1);schedTrig('recall-daily-t','Time to recall. Your questions are waiting.',d.getTime())}
-function tryReload(){if(wantReload&&!$('ov').classList.contains('on'))location.reload()}
+function tryReload(){if(wantReload&&$('ov')&&!$('ov').classList.contains('on'))location.reload()}
 function sw(){if(!('serviceWorker' in navigator)||location.protocol==='file:')return;
  navigator.serviceWorker.addEventListener('controllerchange',function(){if(hadCtrl){wantReload=true;tryReload()}hadCtrl=true});
  navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(function(r){REG=r;regPeriodic(r);schedDaily();snap();setInterval(function(){r.update()},18e5);document.addEventListener('visibilitychange',function(){if(!document.hidden)r.update()})}).catch(function(){})}
@@ -258,8 +318,8 @@ function setRet(v){DB.set.ret=v;save();render()}
 function sh(h){$('pan').innerHTML=h;$('sh').classList.add('on')}
 function closeSh(){$('sh').classList.remove('on')}
 function addSheet(id){
- var o=DB.chs.map(function(c){return '<option value="'+c.id+'"'+(c.id===id?' selected':'')+'>Ch'+c.num+(c.name?' '+esc(c.name):'')+'</option>'}).join('')+'<option value="new">New chapter</option>';
- sh('<h2>Add lecture</h2><div class="lbl">Chapter</div><select class="in" id="a-ch" onchange="aTog()">'+o+'</select><div id="a-new"><input class="in" id="a-num" type="number" min="1" placeholder="Chapter number"><input class="in" id="a-name" placeholder="Chapter name (optional)"></div><div class="lbl">How many questions?</div><input class="in" id="a-n" type="number" min="1" max="60" placeholder="8"><div class="lbl">Question text (optional, one per line)</div><textarea class="in" id="a-t" placeholder="Leave empty to track by label only"></textarea><label class="chk"><input type="checkbox" id="a-ps"> This lecture has a practice sheet</label><button class="btn" onclick="doAdd()">Add lecture</button>');
+ var o=DB.chs.slice().sort(function(a,b){return a.num-b.num}).map(function(c){return '<option value="'+c.id+'"'+(c.id===id?' selected':'')+'>Ch'+c.num+(c.name?' '+esc(c.name):'')+'</option>'}).join('')+'<option value="new">+ New chapter</option>';
+ sh('<h2>Add lecture</h2><div class="lbl">Chapter</div><select class="in" id="a-ch" onchange="aTog()">'+o+'</select><div id="a-new"><input class="in" id="a-num" type="number" min="1" inputmode="numeric" placeholder="Chapter number"><input class="in" id="a-name" placeholder="Chapter name (optional)"></div><div class="lbl">How many questions?</div><input class="in" id="a-n" type="number" min="1" max="60" inputmode="numeric" placeholder="8"><div class="lbl">Question text (optional, one per line)</div><textarea class="in" id="a-t" placeholder="Leave empty and fill them in later"></textarea><label class="chk"><input type="checkbox" id="a-ps"> This lecture has a practice sheet</label><button class="btn" onclick="doAdd()">Add lecture</button>');
  if(!DB.chs.length)$('a-ch').value='new';aTog()}
 function aTog(){$('a-new').style.display=$('a-ch').value==='new'?'block':'none'}
 function doAdd(){var v=$('a-ch').value,n=parseInt($('a-n').value,10),c;
@@ -268,59 +328,138 @@ function doAdd(){var v=$('a-ch').value,n=parseInt($('a-n').value,10),c;
   if(DB.chs.some(function(x){return x.num===num})){toast('Chapter '+num+' already exists');return}
   c={id:DB.nid++,num:num,name:$('a-name').value.trim(),done:false,doneAt:0,testDue:0,testDone:false};DB.chs.push(c)}
  else c=ch(parseInt(v,10));
- if(c.done){toast('That chapter is complete');return}
- var ln=DB.lecs.filter(function(l){return l.ch===c.id}).length+1,l={id:DB.nid++,ch:c.id,num:ln},tx=$('a-t').value.split('\n'),i;DB.lecs.push(l);
- for(i=0;i<n;i++)mk('L',c.id,l.id,'Ch'+c.num+' L'+ln+' Q'+(i+1),(tx[i]||'').trim(),Date.now());
- if($('a-ps').checked)mk('S',c.id,l.id,'Ch'+c.num+' L'+ln+' Practice Sheet','',Date.now());
- save();closeSh();tab='today';render();toast('Lecture '+ln+' added. Review it today.')}
-function chSheet(id){var c=ch(id),ls=DB.lecs.filter(function(l){return l.ch===id}),t=Date.now(),h='<h2>Ch'+c.num+(c.name?' '+esc(c.name):'')+'</h2><p class="sub">'+(c.done?(c.testDone?'Complete. Test done.':'Complete. Test '+(c.testDue<=t?'is ready.':'in '+Math.ceil((c.testDue-t)/DAY)+' days.')):'In progress')+'</p><div style="margin-top:18px">';
- ls.forEach(function(l,i){var cs=DB.cards.filter(function(x){return x.lec===l.id});h+=row(i,'Lecture '+l.num,cs.filter(function(x){return x.k==='L'}).length+' questions'+(cs.some(function(x){return x.k==='S'})?' and a practice sheet':''),cs.filter(function(x){return x.due<=t}).length,'lecSheet('+l.id+')')});
- if(!c.done)h+='</div><button class="btn" onclick="addSheet('+id+')">Add lecture</button><button class="btn alt" onclick="compSheet('+id+')">Mark chapter complete</button>';
- else h+='</div>'+(c.testDone?'':'<button class="btn" onclick="startTest('+id+')">Start chapter test</button>');
- sh(h+'<button class="btn bad" onclick="arm(this,function(){delCh('+id+')})">Delete chapter</button>')}
-function lecSheet(id){var l=lec(id),h='<h2>'+esc(lname(l))+'</h2><p class="sub">Add or edit question text. Optional.</p>';
- DB.cards.filter(function(c){return c.lec===id&&c.k==='L'}).forEach(function(c){h+='<div class="qrow"><b>'+esc(c.label.split(' ').pop())+'</b><input class="in" value="'+esc(c.text)+'" placeholder="No text" onchange="setTx('+c.id+',this.value)"></div>'});
- if(!DB.cards.some(function(c){return c.lec===id&&c.k==='S'}))h+='<button class="btn" onclick="addPS('+id+')">Add practice sheet</button>';
+ if(!c){toast('Chapter not found');return}
+ var ln=0;DB.lecs.forEach(function(l){if(l.ch===c.id&&l.num>ln)ln=l.num});ln++;
+ var l={id:DB.nid++,ch:c.id,num:ln};DB.lecs.push(l);
+ var tx=$('a-t').value.split('\n'),i;
+ for(i=0;i<n;i++)mk('L',c.id,l.id,'',(tx[i]||'').trim(),Date.now());
+ if($('a-ps').checked)mk('S',c.id,l.id,'','',Date.now());
+ relabel();save();chSheet(c.id);render();toast('Lecture '+ln+' added — review it today')}
+/* chapter sheet + editing */
+function chSheet(id){var c=ch(id);if(!c)return;
+ var ls=DB.lecs.filter(function(l){return l.ch===id}).sort(function(a,b){return a.num-b.num}),t=Date.now(),cs=DB.cards.filter(function(x){return x.ch===id});
+ var h='<h2>Ch'+c.num+(c.name?' '+esc(c.name):'')+'</h2><p class="sub">'+ls.length+(ls.length===1?' lecture':' lectures')+' · '+cs.filter(function(x){return x.k==='L'}).length+' questions'+(c.done?(c.testDone?' · complete':' · test pending'):'')+'</p>';
+ h+='<div class="lbl">Lectures</div>';
+ if(!ls.length)h+='<p class="sub" style="margin-top:8px">No lectures yet.</p>';
+ ls.forEach(function(l,i){var lc=DB.cards.filter(function(x){return x.lec===l.id}),dq=lc.filter(function(x){return x.due<=t}).length;
+  h+=row(i,'Lecture '+l.num,lc.filter(function(x){return x.k==='L'}).length+' questions'+(lc.some(function(x){return x.k==='S'})?' + practice sheet':''),dq,'lecSheet('+l.id+')')});
+ h+='<button class="btn" onclick="addSheet('+id+')">Add lecture</button>';
+ if(!c.done)h+='<button class="btn alt" onclick="compSheet('+id+')">Mark chapter complete</button>';
+ else if(!c.testDone)h+='<button class="btn alt" onclick="testSheet('+id+')">Chapter test'+(c.testDue>t?' (in '+Math.max(1,Math.ceil((c.testDue-t)/DAY))+'d)':'')+'</button>';
+ h+='<button class="btn alt" onclick="editChSheet('+id+')">Edit chapter</button>';
+ h+='<button class="btn bad" onclick="delCh('+id+')">Delete chapter</button>';
  sh(h)}
-function addPS(id){var l=lec(id),c=ch(l.ch);mk('S',c.id,id,'Ch'+c.num+' L'+l.num+' Practice Sheet','',Date.now());save();closeSh();render();toast('Practice sheet added')}
-function setTx(id,v){DB.cards.forEach(function(c){if(c.id===id)c.text=v.trim()});save()}
-function compSheet(id){sh('<h2>Complete chapter</h2><p class="sub">The chapter test opens 3 days from now, with all lecture questions and your PYQ sets.</p><div class="lbl">PYQs in this chapter</div><input class="in" id="c-n" type="number" min="0" placeholder="240"><div class="lbl">Questions per set</div><input class="in" id="c-b" type="number" min="5" value="20"><button class="btn" onclick="doComp('+id+')">Complete chapter</button>')}
-function doComp(id){var c=ch(id),n=parseInt($('c-n').value,10)||0,b=Math.max(5,parseInt($('c-b').value,10)||20),k,s=Math.ceil(n/b),t=Date.now();
+function editChSheet(id){var c=ch(id);if(!c)return;
+ sh('<h2>Edit chapter</h2><div class="lbl">Chapter number</div><input class="in" id="e-num" type="number" min="1" inputmode="numeric" value="'+c.num+'"><div class="lbl">Chapter name</div><input class="in" id="e-name" placeholder="Optional" value="'+esc(c.name)+'"><button class="btn" onclick="doEditCh('+id+')">Save chapter</button><button class="btn bad" onclick="delCh('+id+')">Delete chapter</button>')}
+function doEditCh(id){var c=ch(id);if(!c)return;
+ var num=parseInt($('e-num').value,10);if(!(num>=1)){toast('Enter a chapter number');return}
+ if(DB.chs.some(function(x){return x.id!==id&&x.num===num})){toast('Chapter '+num+' already exists');return}
+ c.num=num;c.name=$('e-name').value.trim();relabel();save();chSheet(id);render();toast('Chapter saved')}
+function delCh(id){var c=ch(id);if(!c)return;keep();
+ DB.chs=DB.chs.filter(function(x){return x.id!==id});DB.lecs=DB.lecs.filter(function(l){return l.ch!==id});DB.cards=DB.cards.filter(function(x){return x.ch!==id});
+ sessClean();save();closeSh();render();toast('Ch'+c.num+' deleted',true)}
+/* lecture sheet: every question is editable, deletable, and more can be added later */
+function lecSheet(id){var l=lec(id);if(!l)return;var c=ch(l.ch);
+ var qs=DB.cards.filter(function(x){return x.lec===id&&x.k==='L'}).sort(function(a,b){return a.id-b.id});
+ var h='<h2>'+esc(lname(l))+'</h2><p class="sub">'+qs.length+(qs.length===1?' question':' questions')+' · tap a box to edit it</p>';
+ h+='<div class="lbl">Questions</div>';
+ if(!qs.length)h+='<p class="sub" style="margin-top:8px">No questions yet.</p>';
+ qs.forEach(function(q,i){h+='<div class="qrow"><b>Q'+(i+1)+'</b><input class="in" value="'+esc(q.text)+'" placeholder="Question text (optional)" onchange="setTx('+q.id+',this.value)"><button class="x2" aria-label="Delete question '+(i+1)+'" onclick="delCard('+q.id+')">&times;</button></div>'});
+ h+='<button class="btn alt" onclick="addQ('+id+')">Add question</button>';
+ if(DB.cards.some(function(x){return x.lec===id&&x.k==='S'}))h+='<button class="btn alt" onclick="delPS('+id+')">Remove practice sheet</button>';
+ else h+='<button class="btn alt" onclick="addPS('+id+')">Add practice sheet</button>';
+ h+='<div class="lbl">Lecture number</div><div class="qrow"><input class="in" id="l-num" type="number" min="1" inputmode="numeric" value="'+l.num+'"><button class="btn alt" style="width:auto;padding:16px 20px;margin-top:0" onclick="setLecNum('+id+')">Save</button></div>';
+ h+='<button class="btn bad" onclick="delLec('+id+')">Delete lecture</button>';
+ sh(h)}
+function addQ(id){var l=lec(id);if(!l)return;var c=ch(l.ch);
+ mk('L',c.id,id,'','',Date.now());relabel();save();lecSheet(id);render();toast('Question added')}
+function delCard(id){var q=DB.cards.filter(function(x){return x.id===id})[0];if(!q)return;var lid=q.lec;keep();
+ DB.cards=DB.cards.filter(function(x){return x.id!==id});relabel();sessClean();save();
+ if(lid&&lec(lid))lecSheet(lid);else closeSh();render();toast('Question deleted',true)}
+function addPS(id){var l=lec(id);if(!l)return;var c=ch(l.ch);mk('S',c.id,id,'','',Date.now());relabel();save();lecSheet(id);render();toast('Practice sheet added')}
+function delPS(id){keep();DB.cards=DB.cards.filter(function(x){return !(x.lec===id&&x.k==='S')});sessClean();save();lecSheet(id);render();toast('Practice sheet removed',true)}
+function setTx(id,v){DB.cards.forEach(function(c){if(c.id===id)c.text=String(v).trim()});save()}
+function setLecNum(id){var l=lec(id);if(!l)return;var n=parseInt($('l-num').value,10);
+ if(!(n>=1)){toast('Enter a lecture number');return}
+ if(DB.lecs.some(function(x){return x.ch===l.ch&&x.id!==id&&x.num===n})){toast('Lecture '+n+' already exists');return}
+ l.num=n;relabel();save();lecSheet(id);render();toast('Lecture saved')}
+function delLec(id){var l=lec(id);if(!l)return;var cn=l.num,cid=l.ch;keep();
+ DB.lecs=DB.lecs.filter(function(x){return x.id!==id});DB.cards=DB.cards.filter(function(x){return x.lec!==id});
+ sessClean();save();if(ch(cid))chSheet(cid);else closeSh();render();toast('Lecture '+cn+' deleted',true)}
+function compSheet(id){sh('<h2>Complete chapter</h2><p class="sub">The chapter test opens 3 days from now. It covers every lecture question in this chapter plus your PYQ sets.</p><div class="lbl">PYQs in this chapter</div><input class="in" id="c-n" type="number" min="0" inputmode="numeric" placeholder="240"><div class="lbl">Questions per set</div><input class="in" id="c-b" type="number" min="5" value="20" inputmode="numeric"><button class="btn" onclick="doComp('+id+')">Complete chapter</button>')}
+function doComp(id){var c=ch(id);if(!c)return;
+ var n=parseInt($('c-n').value,10)||0,b=Math.max(5,parseInt($('c-b').value,10)||20),k,s=Math.ceil(n/b),t=Date.now();
  c.done=true;c.doneAt=t;c.testDue=dayStart(t+3*DAY);
- for(k=1;k<=s;k++)mk('P',id,0,'Ch'+c.num+' PYQ Set '+k,'',c.testDue);
- save();closeSh();render();toast('Test scheduled in 3 days')}
-function delCh(id){DB.chs=DB.chs.filter(function(c){return c.id!==id});DB.lecs=DB.lecs.filter(function(l){return l.ch!==id});DB.cards=DB.cards.filter(function(c){return c.ch!==id});save();closeSh();render()}
+ for(k=1;k<=s;k++){var card=mk('P',id,0,'',c.testDue);card.set=k}
+ relabel();save();closeSh();render();toast('Test scheduled in 3 days')}
 function expSheet(){sh('<h2>Export</h2><p class="sub">Copy this text and keep it somewhere safe.</p><textarea class="in" id="ex" readonly style="min-height:180px">'+esc(JSON.stringify(DB))+'</textarea><button class="btn" onclick="cp()">Copy</button>')}
 function cp(){var e=$('ex');e.select();try{navigator.clipboard.writeText(e.value).then(function(){toast('Copied')},function(){document.execCommand('copy');toast('Copied')})}catch(x){document.execCommand('copy');toast('Copied')}}
 function impSheet(){sh('<h2>Import</h2><p class="sub">Paste exported text. This replaces your current data.</p><textarea class="in" id="im" style="min-height:180px"></textarea><button class="btn" onclick="doImp()">Import</button>')}
-function doImp(){try{var d=JSON.parse($('im').value);if(!d||!d.chs||!d.cards||!d.lecs)throw 0;DB=d;fix();save();closeSh();render();toast('Imported')}catch(e){toast('That text is not a valid export')}}
-function fix(){DB.focus=DB.focus||[];DB.pt=DB.pt||{m:'focus',run:false,end:0,rem:null,cy:0,ch:0}}
-function reset(){DB={chs:[],lecs:[],cards:[],log:[],focus:[],pt:{m:'focus',run:false,end:0,rem:null,cy:0,ch:0},set:{ret:.9,exam:''},nid:1};save();render();toast('All data erased')}
-function sample(){var t=Date.now(),i,j,k,n;reset();
+function doImp(){try{var d=JSON.parse($('im').value);
+ if(!d||typeof d!=='object'||(!d.chs&&!d.cards))throw 0;
+ DB=normalize(d);fix();save();LAST=null;closeSh();render();toast('Imported')}
+ catch(e){toast('That text is not a valid export')}}
+function reset(){keep();DB=DEF();save();closeSh();render();toast("Everything erased",true)}
+function sampleSheet(){sh('<h2>Load sample data?</h2><p class="sub">This replaces what you have now. You can undo straight after.</p><button class="btn" onclick="sample()">Load sample</button><button class="btn alt" onclick="closeSh()">Cancel</button>')}
+function eraseSheet(){sh('<h2>Erase everything?</h2><p class="sub">Every chapter, lecture, question and stat on this device will be deleted. You can undo straight after.</p><button class="btn bad" onclick="reset()">Erase everything</button><button class="btn alt" onclick="closeSh()">Cancel</button>')}
+function sample(){var t=Date.now(),i,j,k,n;keep();
+ DB=DEF();
  var c2={id:DB.nid++,num:2,name:'Loops',done:true,doneAt:t-5*DAY,testDue:dayStart(t-2*DAY),testDone:false},c3={id:DB.nid++,num:3,name:'Arrays',done:false,doneAt:0,testDue:0,testDone:false};DB.chs.push(c2,c3);
- for(i=1;i<=3;i++){var l={id:DB.nid++,ch:c2.id,num:i};DB.lecs.push(l);for(j=1;j<=6;j++){mk('L',c2.id,l.id,'Ch2 L'+i+' Q'+j,'',t);var c=DB.cards[DB.cards.length-1];n=Math.random()*5+2;c.state='review';c.reps=2+(j%3);c.lapses=j%5===0?1:0;c.S=n;c.D=4+j%4;c.last=t-n*DAY*(.6+Math.random()*.8);c.due=c.last+n*DAY}}
- for(k=1;k<=4;k++)mk('P',c2.id,0,'Ch2 PYQ Set '+k,'',c2.testDue);
- for(i=1;i<=2;i++){var l2={id:DB.nid++,ch:c3.id,num:i};DB.lecs.push(l2);for(j=1;j<=(i===1?4:7);j++)mk('L',c3.id,l2.id,'Ch3 L'+i+' Q'+j,'',t);if(i===1)mk('S',c3.id,l2.id,'Ch3 L1 Practice Sheet','',t)}
+ for(i=1;i<=3;i++){var l={id:DB.nid++,ch:c2.id,num:i};DB.lecs.push(l);for(j=1;j<=6;j++){var mc=mk('L',c2.id,l.id,'','',t);n=Math.random()*5+2;mc.state='review';mc.reps=2+(j%3);mc.lapses=j%5===0?1:0;mc.S=n;mc.D=4+j%4;mc.last=t-n*DAY*(.6+Math.random()*.8);mc.due=mc.last+n*DAY}}
+ for(k=1;k<=4;k++){var pc=mk('P',c2.id,0,'',c2.testDue);pc.set=k}
+ for(i=1;i<=2;i++){var l2={id:DB.nid++,ch:c3.id,num:i};DB.lecs.push(l2);for(j=1;j<=(i===1?4:7);j++)mk('L',c3.id,l2.id,'','',t);if(i===1)mk('S',c3.id,l2.id,'','',t)}
+ for(i=0;i<DB.cards.length;i++)if(DB.cards[i].k==='L'&&Math.random()<.4)DB.cards[i].text='Explain with an example.';
  for(i=1;i<=12;i++){var ds=dayStart(t)-i*DAY,rn=3+(i*7)%9,sn=1+i%3;for(j=0;j<rn;j++)DB.log.push({t:ds+9*36e5+j*6e5,g:Math.random()<.14?1:Math.random()<.5?3:4,c:1});for(j=0;j<sn;j++)DB.focus.push({t:ds+17*36e5+j*36e5,m:25,ch:j%2?c3.id:c2.id})}
- save();tab='today';render();toast('Sample data loaded')}
+ relabel();save();tab='today';closeSh();render();toast('Sample data loaded',true)}
 /* review */
 function startAll(){var q=dueQ();begin(q.map(function(c){return c.id}),'Today',0)}
-function startGroup(i){begin(G[i].ids,'',0)}
-function startTest(id){closeSh();var ids=DB.cards.filter(function(c){return c.ch===id}).sort(function(a,b){var O={L:0,S:1,P:2};return(O[a.k]-O[b.k])||a.id-b.id}).map(function(c){return c.id});begin(ids,'Test',id)}
-function begin(ids,t,tc){if(!ids.length)return;sess={ids:ids,i:0,test:tc,h:[]};$('ov').classList.add('on');show()}
+function startGroup(i){if(!G[i])return;begin(G[i].ids.slice(),'Today',0)}
+function testSheet(id){var c=ch(id);if(!c)return;
+ var cs=DB.cards.filter(function(x){return x.ch===id}),L=cs.filter(function(x){return x.k==='L'}).length,S=cs.filter(function(x){return x.k==='S'}).length,P=cs.filter(function(x){return x.k==='P'}).length,t=Date.now(),ready=c.testDue<=t;
+ var h='<h2>Ch'+c.num+' test</h2><p class="sub">'+cs.length+' cards: '+L+' questions'+(S?' + '+S+' practice sheets':'')+(P?' + '+P+' PYQ sets':'')+'.</p>';
+ h+=ready?'<p class="sub">Reviewing the whole chapter in one pass.</p>':'<p class="sub">Scheduled for '+new Date(c.testDue).toLocaleDateString(undefined,{day:'numeric',month:'short'})+'. Starting now reviews it early, which is fine — it just comes back sooner.</p>';
+ h+='<button class="btn" onclick="beginTest('+id+')">'+(ready?'Start test':'Start early')+'</button>';
+ sh(h)}
+function beginTest(id){var c=ch(id);if(!c)return;var ids=DB.cards.filter(function(x){return x.ch===id}).sort(function(a,b){var O={L:0,S:1,P:2};return(O[a.k]-O[b.k])||a.id-b.id}).map(function(x){return x.id});closeSh();begin(ids,'Test',id)}
+function startTest(id){testSheet(id)}
+function begin(ids,t,tc){ids=ids.filter(function(i){return !!DB.cards.filter(function(c){return c.id===i}).length});if(!ids.length){toast('Nothing to review');return}sess={ids:ids,i:0,test:tc,h:[]};$('ov').classList.add('on');show()}
 function cardOf(id){return DB.cards.filter(function(c){return c.id===id})[0]}
-function show(){var c=cardOf(sess.ids[sess.i]);$('lab').textContent=c.label;$('ctx').textContent=c.leech?'Failed often. Consider rewriting it.':(c.k==='P'?'PYQ set':c.k==='S'?'Practice sheet':'Lecture question');$('txt').textContent=c.text;$('txt').style.display=c.text?'block':'none';
+function curCard(){return sess?cardOf(sess.ids[sess.i]):null}
+function show(){if(!sess)return;
+ while(sess.i<sess.ids.length&&!cardOf(sess.ids[sess.i]))sess.i++;
+ if(sess.i>=sess.ids.length){finish();return}
+ var c=curCard();if(!c)return;
+ $('lab').textContent=c.label;$('ctx').textContent=c.leech?'Failed often. Consider rewriting it.':(c.k==='P'?'PYQ set · '+DB.cards.filter(function(x){return x.ch===c.ch&&x.k==='P'&&x.set===c.set}).length+' in chapter':c.k==='S'?'Practice sheet':'Lecture question');
+ $('txt').textContent=c.text;$('txt').style.display=c.text?'block':'none';
  $('pb').style.width=(sess.i/sess.ids.length*100)+'%';$('undo').style.visibility=sess.h.length?'visible':'hidden';$('rev').style.display='block';$('gr').classList.remove('on');$('qc').style.display='flex';$('dn').classList.remove('on')}
-function reveal(){var c=cardOf(sess.ids[sess.i]),t=Date.now(),cs=['var(--coral)','var(--sun)','var(--mint)','var(--blue)'],nm=['Again','Hard','Good','Easy'];
- $('gr').innerHTML=nm.map(function(n,i){return '<button class="g" style="background:'+cs[i]+'" onclick="grade('+(i+1)+')">'+n+'<small>'+fmt(sched(c,i+1,t).iv)+'</small></button>'}).join('');
- $('rev').style.display='none';$('gr').classList.add('on')}
-function undo(){var h=sess.h.pop();if(!h)return;Object.assign(cardOf(h.id),JSON.parse(h.s));DB.log.length=h.l;sess.i--;if(sess.test&&ch(sess.test))ch(sess.test).testDone=false;save();show()}
-function grade(g){var c0=cardOf(sess.ids[sess.i]);sess.h.push({id:c0.id,s:JSON.stringify(c0),l:DB.log.length});apply(c0,g);sess.i++;
- if(sess.i>=sess.ids.length){if(sess.test){var c=ch(sess.test);if(c){c.testDone=true;save()}}
-  $('undo').style.visibility=sess.h.length?'visible':'hidden';$('pb').style.width='100%';$('qc').style.display='none';$('gr').classList.remove('on');$('dsub').textContent=sess.ids.length+' questions reviewed.';$('dn').classList.add('on')}
- else show()}
-function closeReview(){$('ov').classList.remove('on');render();setTimeout(tryReload,300)}
-load();fix();render();setInterval(function(){if(DB.pt.run&&pLeft()<=0)pEnd(true);else pDraw()},1000);setInterval(tick,30000);document.addEventListener('visibilitychange',tick);tick();sw();schedDaily();setInterval(tryReload,5000);
+function finish(){if(sess&&sess.test&&ch(sess.test)){ch(sess.test).testDone=true;save()}
+ var total=sess?sess.ids.length:0;
+ if($('undo'))$('undo').style.visibility=sess&&sess.h.length?'visible':'hidden';
+ $('pb').style.width='100%';$('qc').style.display='none';$('gr').classList.remove('on');$('rev').style.display='none';
+ $('dsub').textContent=total+(total===1?' question reviewed.':' questions reviewed.');$('dn').classList.add('on')}
+function reveal(){var c=curCard();if(!c)return;var t=Date.now(),cs=['var(--coral)','var(--sun)','var(--mint)','var(--blue)'],nm=['Again','Hard','Good','Easy'];
+ $('gr').innerHTML=nm.map(function(n,i){var p=plan(c,i+1,t);return '<button class="g" style="background:'+cs[i]+'" onclick="grade('+(i+1)+')">'+n+'<small>'+fmt((p.due-t)/DAY)+'</small></button>'}).join('');
+ $('rev').style.display='none';$('gr').classList.add('on');var b=$('gr').querySelector('button');if(b&&b.focus)b.focus()}
+function undo(){if(!sess)return;var h=sess.h.pop();if(!h)return;
+ var c=cardOf(h.id);if(c)Object.assign(c,JSON.parse(h.s));
+ DB.log.length=h.l;sess.i=Math.max(0,sess.i-1);
+ if(sess.test&&ch(sess.test))ch(sess.test).testDone=false;
+ save();show()}
+function grade(g){if(!sess)return;var c0=curCard();
+ if(!c0){sess.i++;show();return}
+ sess.h.push({id:c0.id,s:JSON.stringify(c0),l:DB.log.length});apply(c0,g);sess.i++;
+ if(sess.i>=sess.ids.length)finish();else show()}
+function closeReview(){$('ov').classList.remove('on');sess=null;render();setTimeout(tryReload,300)}
+document.addEventListener('keydown',function(e){
+ if(e.key!=='Escape')return;
+ if($('sh')&&$('sh').classList.contains('on')){closeSh();return}
+ if($('ov')&&$('ov').classList.contains('on'))closeReview()});
+/* boot: a read failure must never leave a dead white screen */
+function wipe(){try{localStorage.removeItem(KEY)}catch(e){}location.reload()}
+function boot(){try{load();fix();render()}catch(e){
+ DB=DEF();
+ try{$('v-today').innerHTML='<div class="head"><h1>Recall</h1></div><div class="empty"><b>Your saved data could not be read</b><p>That can happen after an interrupted save or a bad import. Reset to start clean, or try reloading first.</p><button class="btn" onclick="location.reload()">Reload</button><button class="btn bad" onclick="wipe()">Reset data</button></div>';$('v-today').classList.add('on');$('nav').innerHTML=''}catch(x){} }}
+boot();setInterval(function(){if(DB.pt.run&&pLeft()<=0)pEnd(true);else pDraw()},1000);setInterval(tick,30000);document.addEventListener('visibilitychange',tick);tick();sw();schedDaily();setInterval(tryReload,5000);
 </script>
 </body>
 </html>

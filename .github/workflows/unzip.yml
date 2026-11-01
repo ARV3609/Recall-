@@ -14,6 +14,9 @@ permissions:
 
 jobs:
   unzip:
+    # only ever run on main: pushing the zip from a feature branch must not
+    # rewrite the working tree underneath you
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - name: Check out repo
