@@ -146,7 +146,7 @@ textarea.in{min-height:96px;resize:vertical}
 </div>
 <script>
 var DAY=864e5,COL=['var(--coral)','var(--sun)','var(--mint)','var(--blue)','var(--lilac)'],KEY='recall.v1',VER=4;
-function DEF(){return{chs:[],lecs:[],cards:[],log:[],focus:[],pt:{m:'focus',run:false,end:0,rem:null,cy:0,ch:0},set:{ret:.9,exam:'',fm:25,bm:5,lb:15,rt:'20:00'},nid:1,v:VER}}
+function DEF(){return{chs:[],lecs:[],cards:[],log:[],focus:[],pt:{m:'focus',run:false,end:0,rem:null,cy:0,ch:0},set:{ret:.9,exam:'',fm:25,bm:5,lb:15,rt:'20:00'},nid:1,v:VER,updatedAt:Date.now()}}
 var DB=DEF(),tab='today',sess=null,LAST=null,toastT=null,saveWarned=false;
 function $(s){return document.getElementById(s)}
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(m){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]})}
@@ -155,8 +155,220 @@ function dayStart(t){var d=new Date(t);d.setHours(0,0,0,0);return d.getTime()}
 function toast(m,undo){var t=$('toast');if(!t)return;$('tm').textContent=m;$('tb').style.display=undo?'inline-block':'none';t.classList.add('on');clearTimeout(toastT);toastT=setTimeout(function(){t.classList.remove('on')},undo?6000:1900)}
 function keep(){try{LAST=JSON.parse(JSON.stringify({chs:DB.chs,lecs:DB.lecs,cards:DB.cards,log:DB.log,focus:DB.focus}))}catch(e){LAST=null}}
 function restore(){if(!LAST)return;DB.chs=LAST.chs;DB.lecs=LAST.lecs;DB.cards=LAST.cards;DB.log=LAST.log;DB.focus=LAST.focus;LAST=null;save();sessClean();render();toast('Restored')}
-function save(){try{localStorage.setItem(KEY,JSON.stringify(DB))}catch(e){if(!saveWarned){saveWarned=true;toast('Storage is full — export a backup')}}snap()}
+function save(noStamp,noSync){
+ if(!noStamp)DB.updatedAt=Date.now();
+ try{localStorage.setItem(KEY,JSON.stringify(DB))}catch(e){if(!saveWarned){saveWarned=true;toast('Storage is full — export a backup')}}
+ snap();
+ if(!noSync)queueSync();
+}
 function load(){try{var j=localStorage.getItem(KEY);if(j)DB=normalize(JSON.parse(j))}catch(e){DB=DEF()}}
+/* ---------- folder sync (Syncthing) ----------
+   Chromium can write straight into a folder the user picks. The folder handle
+   lives in IndexedDB; Syncthing syncs recall-data.json between devices. */
+var SYNC_FILE='recall-data.json',SYNC_PREF='recall.sync.v1';
+var SYNC={on:false,handle:null,perm:'unknown',status:'off',lastErr:'',lastWrite:0,timer:null,busy:false,writing:false,pending:false,last:'',conflicts:[]};
+function syncSupported(){return typeof window.showDirectoryPicker==='function'}
+function syncPrefRead(){try{var p=JSON.parse(localStorage.getItem(SYNC_PREF)||'{}');return !!p.on}catch(e){return false}}
+function syncPrefWrite(on){try{localStorage.setItem(SYNC_PREF,JSON.stringify({on:!!on}))}catch(e){}}
+var idbP=null;
+function idbOpen(){if(idbP)return idbP;idbP=new Promise(function(res,rej){try{var r=indexedDB.open('recall-sync',1);r.onupgradeneeded=function(){try{r.result.createObjectStore('kv')}catch(e){}};r.onsuccess=function(){res(r.result)};r.onerror=function(){rej(r.error)}}catch(e){rej(e)}});return idbP}
+function idbGet(k){return idbOpen().then(function(db){return new Promise(function(res,rej){var t=db.transaction('kv','readonly'),q=t.objectStore('kv').get(k);q.onsuccess=function(){res(q.result)};q.onerror=function(){rej(q.error)}})})}
+function idbSet(k,v){return idbOpen().then(function(db){return new Promise(function(res,rej){var t=db.transaction('kv','readwrite');t.objectStore('kv').put(v,k);t.oncomplete=function(){res()};t.onerror=function(){rej(t.error)}})})}
+function idbDel(k){return idbOpen().then(function(db){return new Promise(function(res,rej){var t=db.transaction('kv','readwrite');t.objectStore('kv').delete(k);t.oncomplete=function(){res()};t.onerror=function(){rej(t.error)}})})}
+function syncBlocked(){return !!(sess||($('ov')&&$('ov').classList.contains('on'))||($('sh')&&$('sh').classList.contains('on')))}
+function syncStatusLine(){
+ if(!syncSupported())return 'This browser cannot write to a folder. Open Recall in Chrome or Edge on a computer, or use the download button below.';
+ if(!SYNC.on||!SYNC.handle)return 'Off. Pick a folder that Syncthing already syncs.';
+ var n='<b>'+esc(SYNC.handle.name)+'</b>';
+ if(SYNC.status==='reconnect')return 'Folder '+n+' is remembered. Reconnect to allow saving again.';
+ if(SYNC.status==='error')return 'Could not write to '+n+(SYNC.lastErr?' ('+esc(SYNC.lastErr)+')':'')+'. Choose the folder again.';
+ if(SYNC.status==='pending')return 'Saving to '+n+'...';
+ if(SYNC.status==='saved'&&SYNC.lastWrite)return 'Saved to '+n+' at '+new Date(SYNC.lastWrite).toLocaleTimeString()+'. Keep this folder in Syncthing.';
+ return 'Connected to '+n+'.';
+}
+function syncPaint(){var el=$('sy-state');if(el)el.innerHTML=syncStatusLine()}
+function syncRender(){if(tab==='settings'&&$('v-settings')&&!($('sh')&&$('sh').classList.contains('on'))){var el=$('v-settings'),s=el.scrollTop;el.innerHTML=vSettings();el.scrollTop=s}}
+function syncPerm(ask){
+ var h=SYNC.handle;if(!h||!h.queryPermission)return Promise.resolve('granted');
+ if(ask&&h.requestPermission)return h.requestPermission({mode:'readwrite'}).catch(function(){return 'denied'});
+ return h.queryPermission({mode:'readwrite'}).catch(function(){return 'prompt'});
+}
+function syncInit(){
+ if(!syncSupported())return;
+ SYNC.on=syncPrefRead();if(!SYNC.on)return;
+ if(!DB.updatedAt&&(DB.chs.length||DB.cards.length))save(false,true);
+ idbGet('dir').then(function(h){
+  if(!h){SYNC.on=false;syncPrefWrite(false);return}
+  SYNC.handle=h;
+  return syncPerm(false).then(function(p){
+   SYNC.perm=p;
+   if(p==='granted'){SYNC.status='connected';syncPull(false,true)}
+   else SYNC.status='reconnect';
+   syncRender();syncPaint();
+  });
+ }).catch(function(){SYNC.status='reconnect';syncRender();syncPaint()});
+}
+function syncChoose(){
+ if(!syncSupported()){syncHelp();return}
+ var opts={mode:'readwrite',id:'recall-folder'};
+ function picked(h){
+  SYNC.handle=h;SYNC.on=true;SYNC.perm='granted';SYNC.status='connected';SYNC.lastErr='';
+  syncPrefWrite(true);
+  return idbSet('dir',h).catch(function(){}).then(function(){return syncPull(true,true)});
+ }
+ try{
+  window.showDirectoryPicker(opts).then(picked).catch(function(e){
+   if(e&&e.name==='AbortError')return;
+   if(e&&(e.name==='SecurityError'||e.name==='NotAllowedError'||e.name==='TypeError')){syncHelp();return}
+   toast('Could not open that folder');syncRender();
+  });
+ }catch(e){toast('Could not open that folder')}
+}
+function syncReconnect(){
+ if(!SYNC.handle){syncChoose();return}
+ syncPerm(true).then(function(p){
+  SYNC.perm=p;
+  if(p!=='granted'){SYNC.status='reconnect';toast('Folder permission was not granted');syncRender();syncPaint();return}
+  SYNC.status='connected';syncRender();syncPaint();
+  syncPull(true,true);
+ });
+}
+function syncNow(){syncPull(true,false)}
+function syncDisconnect(){
+ SYNC.on=false;SYNC.handle=null;SYNC.status='off';SYNC.lastErr='';SYNC.lastWrite=0;
+ clearTimeout(SYNC.timer);SYNC.timer=null;
+ syncPrefWrite(false);idbDel('dir').catch(function(){});
+ toast('Folder sync off');syncRender();
+}
+function syncPull(manual,initial){
+ if(!SYNC.on||!SYNC.handle)return Promise.resolve(false);
+ return syncPerm(false).then(function(p){
+  SYNC.perm=p;
+  if(p!=='granted'){
+   if(!manual){SYNC.status='reconnect';syncPaint();return false}
+   return syncPerm(true).then(function(p2){
+    SYNC.perm=p2;
+    if(p2!=='granted'){SYNC.status='reconnect';syncPaint();syncRender();toast('Folder permission needed');return false}
+    return syncRead(manual,initial);
+   });
+  }
+  return syncRead(manual,initial);
+ });
+}
+function syncRead(manual,initial){
+ if(SYNC.busy)return Promise.resolve(false);
+ SYNC.busy=true;
+ return SYNC.handle.getFileHandle(SYNC_FILE).then(function(fh){return fh.getFile()}).then(function(f){return f.text()}).then(function(txt){
+  var obj;try{obj=JSON.parse(txt)}catch(e){throw new Error('bad file')}
+  if(!obj||obj.app!=='recall'||!obj.data)throw new Error('not a Recall file');
+  var remote=normalize(obj.data),rAt=+obj.updatedAt||+remote.updatedAt||0,lAt=+DB.updatedAt||0;
+  remote.updatedAt=rAt;
+  if(rAt>lAt){
+   if(syncBlocked()){SYNC.busy=false;return false}
+   applyRemote(remote,rAt);
+   if(manual)toast('Loaded newer data from the folder',true);
+   return true;
+  }
+  if(initial||manual)return syncWriteNow(true);
+  return false;
+ }).catch(function(e){
+  if(e&&e.name==='NotFoundError'){if(initial||manual)return syncWriteNow(true);return false}
+  SYNC.status='error';SYNC.lastErr=e&&e.name?e.name:'';syncPaint();
+  if(manual)toast('Could not read the sync file');
+  return false;
+ }).then(function(r){SYNC.busy=false;return r},function(e){SYNC.busy=false;return false});
+}
+function applyRemote(d,at){
+ keep();
+ DB=normalize(d);DB.updatedAt=+at||DB.updatedAt||Date.now();fix();save(true,true);
+ SYNC.lastWrite=0;SYNC.status='connected';syncPaint();
+ render();toast('Synced from the folder',true);
+}
+function queueSync(){
+ if(!SYNC.on||!SYNC.handle)return;
+ clearTimeout(SYNC.timer);
+ SYNC.timer=setTimeout(function(){SYNC.timer=null;syncWriteNow(false)},700);
+}
+function syncWriteNow(force){
+ if(!SYNC.on||!SYNC.handle)return Promise.resolve(false);
+ if(SYNC.writing){SYNC.pending=true;return Promise.resolve(false)}
+ return syncPerm(false).then(function(p){
+  SYNC.perm=p;
+  if(p!=='granted'){SYNC.status='reconnect';syncPaint();syncRender();return false}
+  var payload=JSON.stringify(DB);
+  if(!force&&payload===SYNC.last)return true;
+  SYNC.writing=true;SYNC.status='pending';syncPaint();
+  var wrap={app:'recall',v:VER,updatedAt:+DB.updatedAt||Date.now(),savedAt:Date.now(),device:(navigator.platform||''),data:DB};
+  return SYNC.handle.getFileHandle(SYNC_FILE,{create:true}).then(function(fh){return fh.createWritable()}).then(function(w){
+   return w.write(JSON.stringify(wrap)).then(function(){return w.close()});
+  }).then(function(){
+   SYNC.last=payload;SYNC.lastWrite=Date.now();SYNC.status='saved';SYNC.lastErr='';syncPaint();return true;
+  }).catch(function(e){
+   SYNC.status='error';SYNC.lastErr=e&&e.name?e.name:'';syncPaint();syncRender();return false;
+  }).then(function(r){SYNC.writing=false;if(SYNC.pending){SYNC.pending=false;syncWriteNow(true)}return r},function(e){SYNC.writing=false;return false});
+ });
+}
+function syncWrap(){return {app:'recall',v:VER,updatedAt:+DB.updatedAt||Date.now(),savedAt:Date.now(),device:(navigator.platform||''),data:DB}}
+function syncDownload(){
+ try{
+  var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(syncWrap())],{type:'application/json'}));a.download=SYNC_FILE;
+  document.body.appendChild(a);a.click();
+  setTimeout(function(){URL.revokeObjectURL(a.href);if(a.parentNode)a.parentNode.removeChild(a)},1500);
+  toast('Sync file downloaded');
+ }catch(e){toast('Could not create the file')}
+}
+function syncHelp(){
+ sh('<h2>Sync a folder</h2><p class="sub">Saving straight to a folder needs Chrome or Edge on a computer. On this device you can download recall-data.json and drop it into your Syncthing folder yourself.</p><button class="btn" onclick="syncDownload()">Download sync file</button><button class="btn alt" onclick="closeSh()">Close</button>');
+}
+function syncOpenFile(){var i=$('sy-file');if(i)i.click()}
+function syncLoadFile(inp){
+ var f=inp&&inp.files&&inp.files[0];if(!f)return;
+ var r=new FileReader();
+ r.onload=function(){
+  try{
+   var o=JSON.parse(r.result),d=o&&o.data?o.data:o;
+   if(!d||typeof d!=='object'||(!d.chs&&!d.cards))throw 0;
+   askFirst('Load this file?','It replaces what is on this device. You can undo straight after.','Load file',function(){
+    keep();DB=normalize(d);DB.updatedAt=Date.now();fix();save();closeSh();render();toast('File loaded',true);
+   },function(){closeSh()});
+  }catch(e){toast('That is not a Recall file')}
+ };
+ r.readAsText(f);
+}
+function syncCheckConflicts(){
+ if(!SYNC.on||!SYNC.handle){toast('Connect a folder first');return}
+ if(!SYNC.handle.entries){toast('This browser cannot list the folder');return}
+ syncPerm(true).then(function(p){
+  if(p!=='granted'){toast('Folder permission needed');return}
+  var names=[],it=SYNC.handle.entries();
+  function step(){return it.next().then(function(r){
+   if(r.done)return names;
+   var n=r.value[0];
+   if(n.indexOf('recall-data.sync-conflict-')===0)names.push(n);
+   return step();
+  })}
+  return step().then(function(ns){syncConflictSheet(ns)});
+ }).catch(function(){toast('Could not read the folder')});
+}
+function syncConflictSheet(names){
+ SYNC.conflicts=(names||[]).slice().sort().reverse();
+ if(!SYNC.conflicts.length){
+  sh('<h2>No conflict copies</h2><p class="sub">Syncthing has not left any conflict files in this folder.</p><button class="btn alt" onclick="closeSh()">Close</button>');return;
+ }
+ var h='<h2>Conflict copies</h2><p class="sub">Syncthing made these when two devices saved at once. Load one only if it holds the work you want; it replaces what is on this device.</p>';
+ SYNC.conflicts.forEach(function(x,i){h+='<button class="btn alt" style="margin-top:'+(i?'12px':'0')+'" onclick="syncLoadConflict('+i+')">'+esc(x)+'</button>'});
+ sh(h);
+}
+function syncLoadConflict(i){
+ var n=SYNC.conflicts&&SYNC.conflicts[i];if(!n||!SYNC.handle)return;
+ SYNC.handle.getFileHandle(n).then(function(fh){return fh.getFile()}).then(function(f){return f.text()}).then(function(txt){
+  var o,d;
+  try{o=JSON.parse(txt);d=o&&o.data?o.data:o}catch(e){toast('Could not read that file');return}
+  askFirst('Load this conflict copy?','It replaces what is on this device. You can undo straight after.','Load copy',function(){
+   keep();DB=normalize(d);DB.updatedAt=Date.now();fix();save();closeSh();render();toast('Conflict copy loaded',true);
+  },function(){syncConflictSheet(SYNC.conflicts)});
+ }).catch(function(){toast('Could not read that file')});
+}
 /* ---------- schema ----------
    A lecture is the thing you review and rate. Questions are just a list you
    keep on it. Older saves (one schedule per question) are migrated on load. */
@@ -191,7 +403,7 @@ function normalize(d){
  if(['focus','break','long'].indexOf(d.pt.m)<0)d.pt.m='focus';
  d.set=Object.assign({ret:.9,exam:'',fm:25,bm:5,lb:15,rt:'20:00'},(d.set&&typeof d.set==='object')?d.set:{});
  if([.85,.9,.95].indexOf(+d.set.ret)<0)d.set.ret=.9;
- d.nid=fixIds(d);d.v=VER;
+ d.nid=fixIds(d);d.v=VER;d.updatedAt=+d.updatedAt||0;
  return d;
 }
 function fixIds(d){
@@ -380,8 +592,25 @@ function pEnd(auto){var p=DB.pt,L=pLen(p.m),left=pLeft();if(!auto)closeTrig('rec
 function pRes(){var p=DB.pt;closeTrig('recall-timer');p.run=false;p.rem=null;save();pDraw()}
 function pDraw(){var p=DB.pt,L=pLen(p.m),l=pLeft(),s=Math.ceil(l/1000),t=('0'+Math.floor(s/60)).slice(-2)+':'+('0'+s%60).slice(-2);
  if(p.run)document.title=t+' Recall';if(tab!=='focus')return;var a=$('p-t');if(!a)return;a.textContent=t;$('p-r').setAttribute('stroke-dashoffset',603.19*(1-(L-l)/L));$('p-b').textContent=p.run?'Pause':(p.rem==null?'Start':'Resume')}
+function syncSettingsHtml(){
+ var h='<p class="sub" id="sy-state">'+syncStatusLine()+'</p>';
+ if(!syncSupported()){
+  h+='<button class="btn alt" onclick="syncHelp()">How to sync this device</button><button class="btn alt" style="margin-top:12px" onclick="syncDownload()">Download sync file</button><button class="btn alt" style="margin-top:12px" onclick="syncOpenFile()">Load a sync file</button><input type="file" id="sy-file" accept="application/json,.json" style="display:none" onchange="syncLoadFile(this)">';
+  return h;
+ }
+ if(!SYNC.on||!SYNC.handle){
+  h+='<button class="btn" onclick="syncChoose()">Choose sync folder</button>';
+ }else if(SYNC.status==='reconnect'||SYNC.status==='error'){
+  h+='<button class="btn" onclick="syncReconnect()">Reconnect folder</button><button class="btn alt" style="margin-top:12px" onclick="syncNow()">Sync now</button><button class="btn alt" style="margin-top:12px" onclick="syncDisconnect()">Stop syncing</button>';
+ }else{
+  h+='<button class="btn alt" onclick="syncNow()">Sync now</button><button class="btn alt" style="margin-top:12px" onclick="syncDisconnect()">Stop syncing</button>';
+ }
+ h+='<button class="btn alt" style="margin-top:12px" onclick="syncCheckConflicts()">Check for conflict copies</button><button class="btn alt" style="margin-top:12px" onclick="syncOpenFile()">Load a sync file</button><input type="file" id="sy-file" accept="application/json,.json" style="display:none" onchange="syncLoadFile(this)">';
+ h+='<p class="sub" style="margin-top:10px">Point Syncthing at this folder on every device. Recall writes <b>'+SYNC_FILE+'</b> after each change and loads a newer copy when the app opens.</p>';
+ return h;
+}
 function vSettings(){var r=DB.set.ret;
- return '<div class="head"><h1>Settings</h1><p class="sub">Stored on this device</p></div><div class="lbl" style="margin-top:0">Recall target</div><div class="chips">'+[.85,.9,.95].map(function(v){return '<button class="chip '+(r===v?'on':'')+'" onclick="setRet('+v+')">'+Math.round(v*100)+'%</button>'}).join('')+'</div><p class="sub">Higher means more reviews and longer memory.</p><div class="lbl">Exam date</div><input class="in" type="date" value="'+esc(DB.set.exam)+'" onchange="DB.set.exam=this.value;save();toast(\'Saved\')"><p class="sub">Intervals shrink as the exam gets close.</p><div class="lbl">Focus timer (minutes)</div><div class="qrow"><b>Focus</b><input class="in" type="number" min="1" max="120" value="'+(DB.set.fm||25)+'" onchange="setLen(\'fm\',this.value)"></div><div class="qrow"><b>Break</b><input class="in" type="number" min="1" max="60" value="'+(DB.set.bm||5)+'" onchange="setLen(\'bm\',this.value)"></div><div class="qrow"><b>Long break</b><input class="in" type="number" min="1" max="60" value="'+(DB.set.lb||15)+'" onchange="setLen(\'lb\',this.value)"></div><div class="lbl">Daily reminder</div><div class="chips"><button class="chip '+(DB.set.rn?'on':'')+'" onclick="setRem(true)">On</button><button class="chip '+(DB.set.rn?'':'on')+'" onclick="setRem(false)">Off</button></div><input class="in" type="time" value="'+esc(DB.set.rt||'20:00')+'" onchange="DB.set.rt=this.value;save();schedDaily();toast(\'Reminder time saved\')"><p class="sub">'+remNote()+'</p><button class="btn alt" onclick="testN()">Send test notification</button><button class="btn alt" style="margin-top:12px" onclick="icsSheet()">Add a calendar reminder</button><div class="lbl">Backup</div><button class="btn alt" onclick="expSheet()">Export data</button><button class="btn alt" style="margin-top:12px" onclick="impSheet()">Import data</button><button class="btn alt" style="margin-top:12px" onclick="sampleSheet()">Load sample data</button><button class="btn bad" onclick="eraseSheet()">Erase everything</button>'}
+ return '<div class="head"><h1>Settings</h1><p class="sub">Stored on this device</p></div><div class="lbl" style="margin-top:0">Recall target</div><div class="chips">'+[.85,.9,.95].map(function(v){return '<button class="chip '+(r===v?'on':'')+'" onclick="setRet('+v+')">'+Math.round(v*100)+'%</button>'}).join('')+'</div><p class="sub">Higher means more reviews and longer memory.</p><div class="lbl">Exam date</div><input class="in" type="date" value="'+esc(DB.set.exam)+'" onchange="DB.set.exam=this.value;save();toast(\'Saved\')"><p class="sub">Intervals shrink as the exam gets close.</p><div class="lbl">Focus timer (minutes)</div><div class="qrow"><b>Focus</b><input class="in" type="number" min="1" max="120" value="'+(DB.set.fm||25)+'" onchange="setLen(\'fm\',this.value)"></div><div class="qrow"><b>Break</b><input class="in" type="number" min="1" max="60" value="'+(DB.set.bm||5)+'" onchange="setLen(\'bm\',this.value)"></div><div class="qrow"><b>Long break</b><input class="in" type="number" min="1" max="60" value="'+(DB.set.lb||15)+'" onchange="setLen(\'lb\',this.value)"></div><div class="lbl">Daily reminder</div><div class="chips"><button class="chip '+(DB.set.rn?'on':'')+'" onclick="setRem(true)">On</button><button class="chip '+(DB.set.rn?'':'on')+'" onclick="setRem(false)">Off</button></div><input class="in" type="time" value="'+esc(DB.set.rt||'20:00')+'" onchange="DB.set.rt=this.value;save();schedDaily();toast(\'Reminder time saved\')"><p class="sub">'+remNote()+'</p><button class="btn alt" onclick="testN()">Send test notification</button><button class="btn alt" style="margin-top:12px" onclick="icsSheet()">Add a calendar reminder</button><div class="lbl">Folder sync</div>'+syncSettingsHtml()+'<div class="lbl">Backup</div><button class="btn alt" onclick="expSheet()">Export data</button><button class="btn alt" style="margin-top:12px" onclick="impSheet()">Import data</button><button class="btn alt" style="margin-top:12px" onclick="sampleSheet()">Load sample data</button><button class="btn bad" onclick="eraseSheet()">Erase everything</button>'}
 function render(){nav();var dn=dueQ().length;lastDue=dn;updTitle(dn);['today','chapters','focus','progress','settings'].forEach(function(k){$('v-'+k).classList.toggle('on',k===tab)});
  $('v-today').innerHTML=vToday();$('v-chapters').innerHTML=vChapters();$('v-focus').innerHTML=vFocus();$('v-progress').innerHTML=vProgress();$('v-settings').innerHTML=vSettings();pDraw()}
 /* ---------- reminders ---------- */
@@ -719,7 +948,7 @@ function pinViewport(){try{if(window.scrollY||window.pageYOffset||document.docum
 window.addEventListener('resize',pinViewport);
 window.addEventListener('orientationchange',pinViewport);
 if(window.visualViewport)window.visualViewport.addEventListener('resize',pinViewport);
-boot();pinViewport();setInterval(function(){if(DB.pt.run&&pLeft()<=0)pEnd(true);else pDraw();tickNext();if(++tickN%5===0)refreshDue()},1000);setInterval(tick,30000);document.addEventListener('visibilitychange',function(){tick();if(!document.hidden)refreshDue(true);tickNext()});tick();sw();schedDaily();setInterval(tryReload,5000);
+boot();syncInit();pinViewport();setInterval(function(){if(DB.pt.run&&pLeft()<=0)pEnd(true);else pDraw();tickNext();if(++tickN%5===0)refreshDue()},1000);setInterval(tick,30000);document.addEventListener('visibilitychange',function(){tick();if(!document.hidden){refreshDue(true);syncPull(false,false)}else if(SYNC.timer){clearTimeout(SYNC.timer);SYNC.timer=null;syncWriteNow(true)}});window.addEventListener('focus',function(){syncPull(false,false)});window.addEventListener('pagehide',function(){if(SYNC.timer){clearTimeout(SYNC.timer);SYNC.timer=null;syncWriteNow(true)}});setInterval(function(){syncPull(false,false)},60000);tick();sw();schedDaily();setInterval(tryReload,5000);
 </script>
 </body>
 </html>
